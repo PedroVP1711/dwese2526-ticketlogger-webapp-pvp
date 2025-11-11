@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(#{region.list.title})"></head>
+<body class="d-flex flex-column h-100">
+<header th:replace="fragments/header :: header"></header>
+
+<div class="container">
+    <h2 th:text="#{region.list.title}"></h2>
+    <a href="/regions/new" class="btn btn-success mb-3" th:text="#{region.add.new}"></a>
+
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th th:text="#{region.id}"></th>
+            <th th:text="#{region.code}"></th>
+            <th th:text="#{region.name}"></th>
+            <th th:text="#{region.actions}"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="region : ${listRegions}">
+            <td th:text="${region.id}"></td>
+            <td th:text="${region.code}"></td>
+            <td th:text="${region.name}"></td>
+            <td>
+                <a th:href="@{/regions/edit(id=${region.id})}" class="btn btn-warning btn-sm" th:text="#{region.edit}"></a>
+                <a th:href="@{/regions/delete(id=${region.id})}" class="btn btn-danger btn-sm"
+                   th:text="#{region.delete}"
+                   onclick="return confirm('#{region.confirmDelete}')"></a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<footer th:replace="fragments/footer :: footer"></footer>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(#{region.form.title.new})"></head>
+<body class="d-flex flex-column h-100">
+<header th:replace="fragments/header :: header"></header>
+
+<div class="container">
+    <h2 th:text="${region.id == null} ? #{region.form.title.new} : #{region.form.title.edit}"></h2>
+
+    <form th:action="@{${region.id == null} ? '/regions/save' : '/regions/update'}"
+          method="post" th:object="${region}">
+        <div class="mb-3">
+            <label for="code" class="form-label" th:text="#{region.code}"></label>
+            <input type="text" th:field="*{code}" id="code" class="form-control" />
+            <div th:if="${#fields.hasErrors('code')}" class="text-danger" th:errors="*{code}"></div>
+        </div>
+
+        <div class="mb-3">
+            <label for="name" class="form-label" th:text="#{region.name}"></label>
+            <input type="text" th:field="*{name}" id="name" class="form-control" />
+            <div th:if="${#fields.hasErrors('name')}" class="text-danger" th:errors="*{name}"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary"
+                th:text="${region.id == null} ? #{region.save} : #{region.update}"></button>
+        <a href="/regions" class="btn btn-secondary" th:text="#{region.cancel}"></a>
+    </form>
+</div>
+
+<footer th:replace="fragments/footer :: footer"></footer>
+</body>
+</html>

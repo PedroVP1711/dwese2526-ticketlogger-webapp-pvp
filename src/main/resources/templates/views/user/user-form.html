@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.w3.org/1999/xhtml">
+<head th:replace="fragments/head :: head('Formulario de users')"></head>
+<body class="d-flex flex-column h-100">
+<header th:replace="fragments/header :: header"></header>
+
+<div class="container mt-5">
+    <h2 th:text="#{user.id == null ? 'user.add.new' : 'user.edit'}"></h2>
+
+    <form th:action="@{${user.id == null} ? '/users/save' : '/users/update'}" th:object="${user}" method="post">
+        <input type="hidden" th:field="*{id}" />
+        <div class="form-group">
+            <label for="username" th:text="#{user.username}"></label>
+            <input type="text" id="username" name="username" th:field="*{username}" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label for="email" th:text="#{user.email}"></label>
+            <input type="email" id="email" name="email" th:field="*{email}" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label for="password" th:text="#{user.password}"></label>
+            <input type="password" id="password" name="password" th:field="*{password}" class="form-control" required> <!-- 'password' -->
+        </div>
+
+        <button type="submit" class="btn btn-success">
+            <span th:text="#{user.save}"></span>
+        </button>
+        <a href="/users" class="btn btn-secondary" th:text="#{user.cancel}"></a>
+    </form>
+
+</div>
+
+<footer th:replace="fragments/footer :: footer"></footer>
+</body>
+</html>

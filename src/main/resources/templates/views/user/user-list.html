@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head('Lista de Users')"></head>
+<body class="d-flex flex-column h-100">
+<header th:replace="fragments/header :: header"></header>
+
+<div class="container mt-5">
+    <h2 th:text="#{user.list.title}"></h2>
+    <a href="/users/new" class="btn btn-primary mb-3" th:text="#{user.add.new}"></a>
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th th:text="#{user.username}"></th>
+            <th th:text="#{user.email}"></th>
+            <th th:text="#{user.password}"></th>
+            <th th:text="#{user.actions}"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="user : ${listUsers}">
+            <!-- Mostrar los detalles del usuario -->
+            <td th:text="${user.username}"></td>
+            <td th:text="${user.email}"></td>
+            <td th:text="${user.password}"></td>  <!-- Mostrar la contraseña correctamente -->
+
+            <td>
+                <a th:href="@{/users/edit(id=${user.id})}" class="btn btn-warning btn-sm" th:text="#{user.edit}"></a>
+                <a th:href="@{/users/delete(id=${user.id})}" class="btn btn-danger btn-sm" onclick="return confirm('#{user.confirmDelete}')" th:text="#{user.delete}"></a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<footer th:replace="fragments/footer :: footer"></footer>
+</body>
+</html>
