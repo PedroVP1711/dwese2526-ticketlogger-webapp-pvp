@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(#{msg.province-list.title})"></head>
+<body class="d-flex flex-column h-100">
+<header th:replace="fragments/header :: header"></header>
+
+<div class="container">
+    <h2 class="mt-4 mb-4" th:text="#{msg.province-list.title}">Listado de Provincias</h2>
+
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+    <p class="mb-3">
+        <a th:href="@{/provinces/new}" class="btn btn-primary" th:text="#{msg.province-list.add}">
+            Agregar Nueva Provincia
+        </a>
+    </p>
+
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+        <tr>
+            <th th:text="#{msg.province-list.id}">ID</th>
+            <th th:text="#{msg.province-list.code}">Código</th>
+            <th th:text="#{msg.province-list.name}">Nombre</th>
+            <th th:text="#{msg.province-list.region}">Comunidad Autónoma</th>
+            <th th:text="#{msg.province-list.actions}">Acciones</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="province : ${listProvinces}">
+            <td th:text="${province.id}">1</td>
+            <td th:text="${province.code}">C01</td>
+            <td th:text="${province.name}">Provincia Uno</td>
+            <td th:text="${province.region.name}">Andalucía</td>
+            <td>
+                <a th:href="@{/provinces/edit(id=${province.id})}" class="btn btn-sm btn-info me-2"
+                   th:text="#{msg.province-list.edit}">Editar</a>
+
+                <form th:action="@{/provinces/delete}" method="post" style="display:inline;"
+                      th:onsubmit="'return confirm(\'' + #{msg.province-list.confirm} + '\');'">
+
+                    <input type="hidden" name="id" th:value="${province.id}" />
+
+                    <button type="submit" class="btn btn-sm btn-danger" th:text="#{msg.province-list.delete}">
+                        Eliminar
+                    </button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div th:if="${listProvinces.isEmpty()}" class="alert alert-warning text-center">
+        No hay provincias registradas.
+    </div>
+</div>
+
+<footer th:replace="fragments/footer :: footer"></footer>
+</body>
+</html>

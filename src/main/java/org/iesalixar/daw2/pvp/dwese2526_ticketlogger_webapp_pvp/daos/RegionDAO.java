@@ -13,5 +13,5 @@ public interface RegionDAO {
 
     // Añadimos estos dos métodos 👇
     boolean existsRegionByCode(String code);
-    boolean existsRegionByCodeAndNotId(String code, Long id);
+    boolean existsRegionByCodeAndNotId(String code, Long id);;
 }

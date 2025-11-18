@@ -40,8 +40,8 @@ public class Region {
     }
 
     /** Constructor con todos los campos. */
-    public Region(Long id, String code, String name) {
-        this.id = id;
+    public Region(int id, String code, String name) {
+        this.id = (long) id;
         this.code = code;
         this.name = name;
     }
