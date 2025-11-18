@@ -3,12 +3,6 @@ package org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.entities;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-// Se asume la existencia de la clase Region y las anotaciones Lombok
-// @Data, @NoArgsConstructor, @AllArgsConstructor, y anotaciones de validación (Bean Validation)
 
 public class Province {
     private Long id;
