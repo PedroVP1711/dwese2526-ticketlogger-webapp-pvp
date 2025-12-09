@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(#{msg.user-detail.title})"></head>
+
+<body class="d-flex flex-column h-100">
+
+<header th:replace="fragments/header :: header"></header>
+
+<main class="detail-page container py-4">
+    <div class="detail-card">
+        <h1 th:text="#{msg.user-detail.title}">Detalles del Usuario</h1>
+
+        <div class="mb-3">
+            <label class="form-label font-weight-bold" th:text="#{msg.user-detail.id}">ID</label>
+            <p th:text="${user.id}" class="form-control-static"></p>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label font-weight-bold" th:text="#{msg.user-detail.username}">Nombre de Usuario</label>
+            <p th:text="${user.username}" class="form-control-static"></p>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label font-weight-bold" th:text="#{msg.user-detail.email}">Correo Electrónico</label>
+            <p th:text="${user.email}" class="form-control-static"></p>
+        </div>
+
+        <h4 class="mt-4 border-bottom pb-2" th:text="#{msg.user-detail.security_status}">Estado de Seguridad</h4>
+
+        <div class="mb-3">
+            <label class="form-label font-weight-bold" th:text="#{msg.user-detail.active}">Activo</label>
+            <p th:text="${user.active ? 'Sí' : 'No'}" class="form-control-static"></p>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label font-weight-bold" th:text="#{msg.user-detail.nonlocked}">Cuenta Bloqueada</label>
+            <p th:text="${user.accountNonLocked ? 'No (Desbloqueada)' : 'Sí (Bloqueada)'}" class="form-control-static"></p>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label font-weight-bold" th:text="#{msg.user-detail.failed_attempts}">Intentos Fallidos de Login</label>
+            <p th:text="${user.failedLoginAttempts}" class="form-control-static"></p>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label font-weight-bold" th:text="#{msg.user-detail.email_verified}">Email Verificado</label>
+            <p th:text="${user.emailVerified ? 'Sí' : 'No'}" class="form-control-static"></p>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label font-weight-bold" th:text="#{msg.user-detail.mustchange}">Debe Cambiar Contraseña</label>
+            <p th:text="${user.mustChangePassword ? 'Sí' : 'No'}" class="form-control-static"></p>
+        </div>
+
+        <h4 class="mt-4 border-bottom pb-2" th:text="#{msg.user-detail.dates}">Fechas de Seguridad</h4>
+
+        <div class="mb-3">
+            <label class="form-label font-weight-bold" th:text="#{msg.user-detail.last_password_change}">Último Cambio de Contraseña</label>
+            <p th:text="${#temporals.format(user.lastPasswordChange, 'dd-MM-yyyy HH:mm')}" class="form-control-static"></p>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label font-weight-bold" th:text="#{msg.user-detail.password_expires_at}">Expiración de Contraseña</label>
+            <p th:if="${user.passwordExpiresAt != null}" th:text="${#temporals.format(user.passwordExpiresAt, 'dd-MM-yyyy HH:mm')}" class="form-control-static"></p>
+            <p th:unless="${user.passwordExpiresAt != null}" th:text="#{msg.user-detail.never_expires}" class="form-control-static text-muted">Nunca Expira</p>
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+            <a th:href="@{/users/edit(id=${user.id})}" class="btn btn-warning" th:text="#{msg.user-detail.edit}">Editar</a>
+            <a th:href="@{/users}" class="btn btn-secondary" th:text="#{msg.user-detail.returnback}">Volver</a>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="fragments/footer :: footer"></footer>
+<div th:replace="fragments/scripts :: scripts"></div>
+
+</body>
+</html>

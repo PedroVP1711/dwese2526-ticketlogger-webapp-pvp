@@ -1,37 +1,111 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="fragments/head :: head('Lista de Users')"></head>
+<head th:replace="fragments/head :: head(#{user.list.title})"></head>
 <body class="d-flex flex-column h-100">
 <header th:replace="fragments/header :: header"></header>
 
-<div class="container mt-5">
-    <h2 th:text="#{user.list.title}"></h2>
-    <a href="/users/new" class="btn btn-primary mb-3" th:text="#{user.add.new}"></a>
-    <table class="table table-bordered">
+<main class="container py-4">
+    <h2 th:text="#{user.list.title}">Listado de Usuarios</h2>
+
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+    <a th:href="@{/users/new}" class="btn btn-success mb-3" th:text="#{user.add.new}">Añadir Nuevo Usuario</a>
+
+    <table class="table table-bordered table-hover">
         <thead>
         <tr>
-            <th th:text="#{user.username}"></th>
-            <th th:text="#{user.email}"></th>
-            <th th:text="#{user.password}"></th>
-            <th th:text="#{user.actions}"></th>
+            <th scope="col">
+                <a th:href="@{/users(page=${currentPage}, size=${pageSize}, sortField='id', sortDir=${sortField == 'id' ? reverseSortDir : 'asc'})}">
+                    <span th:text="#{user.id}">ID</span>
+                    <span th:if="${sortField == 'id'}" th:text="${sortDir == 'asc' ? ' ▲' : ' ▼'}"></span>
+                </a>
+            </th>
+
+            <th scope="col">
+                <a th:href="@{/users(page=${currentPage}, size=${pageSize}, sortField='username', sortDir=${sortField == 'username' ? reverseSortDir : 'asc'})}">
+                    <span th:text="#{user.username}">Username</span>
+                    <span th:if="${sortField == 'username'}" th:text="${sortDir == 'asc' ? ' ▲' : ' ▼'}"></span>
+                </a>
+            </th>
+
+            <th scope="col">
+                <a th:href="@{/users(page=${currentPage}, size=${pageSize}, sortField='email', sortDir=${sortField == 'email' ? reverseSortDir : 'asc'})}">
+                    <span th:text="#{user.email}">Email</span>
+                    <span th:if="${sortField == 'email'}" th:text="${sortDir == 'asc' ? ' ▲' : ' ▼'}"></span>
+                </a>
+            </th>
+
+            <th scope="col" th:text="#{user.active}">Activo</th>
+            <th scope="col" th:text="#{user.locked}">Bloqueado</th>
+            <th scope="col" th:text="#{user.email_verified}">Email Verificado</th>
+
+            <th scope="col" th:text="#{user.actions}">Acciones</th>
         </tr>
         </thead>
         <tbody>
-        <tr th:each="user : ${listUsers}">
-            <!-- Mostrar los detalles del usuario -->
-            <td th:text="${user.username}"></td>
-            <td th:text="${user.email}"></td>
-            <td th:text="${user.password}"></td>  <!-- Mostrar la contraseña correctamente -->
+        <tr th:each="user : ${users}">
+            <td th:text="${user.id}">1</td>
+            <td th:text="${user.username}">username</td>
+            <td th:text="${user.email}">user@example.com</td>
 
             <td>
-                <a th:href="@{/users/edit(id=${user.id})}" class="btn btn-warning btn-sm" th:text="#{user.edit}"></a>
-                <a th:href="@{/users/delete(id=${user.id})}" class="btn btn-danger btn-sm" onclick="return confirm('#{user.confirmDelete}')" th:text="#{user.delete}"></a>
+                <span th:if="${user.active}" class="text-success">✔</span>
+                <span th:unless="${user.active}" class="text-danger">❌</span>
+            </td>
+            <td>
+                <span th:if="${user.accountNonLocked}" class="text-success">✔</span>
+                <span th:unless="${user.accountNonLocked}" class="text-danger">❌</span>
+            </td>
+            <td>
+                <span th:if="${user.emailVerified}" class="text-success">✔</span>
+                <span th:unless="${user.emailVerified}" class="text-danger">❌</span>
+            </td>
+
+            <td class="d-flex gap-1">
+                <a th:href="@{/users/detail(id=${user.id})}" class="btn btn-info btn-sm" th:text="#{user.detail}">Detalle</a>
+                <a th:href="@{/users/edit(id=${user.id})}" class="btn btn-warning btn-sm" th:text="#{user.edit}">Editar</a>
+
+                <form th:action="@{/users/delete}" method="get" style="display:inline;" th:attr="onsubmit=|return confirm(this.getAttribute('data-confirm'))|" th:data-confirm="#{user.confirmDelete}">
+                    <input type="hidden" name="id" th:value="${user.id}" />
+                    <button type="submit" class="btn btn-danger btn-sm" th:text="#{user.delete}">Eliminar</button>
+                </form>
             </td>
         </tr>
         </tbody>
     </table>
-</div>
+
+    <div th:if="${totalPages > 0}" class="row mt-3">
+        <div class="col-sm-12">
+            <nav aria-label="Page navigation" th:if="${totalPages > 1}">
+                <ul class="pagination justify-content-center">
+                    <li th:class="${currentPage == 0 ? 'page-item disabled' : 'page-item'}">
+                        <a class="page-link"
+                           th:href="@{/users(page=${currentPage - 1}, size=${pageSize}, sortField=${sortField}, sortDir=${sortDir})}"
+                           th:text="#{pagination.previous}">Anterior</a>
+                    </li>
+
+                    <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                        th:class="${currentPage == i ? 'page-item active' : 'page-item'}">
+                        <a class="page-link"
+                           th:href="@{/users(page=${i}, size=${pageSize}, sortField=${sortField}, sortDir=${sortDir})}"
+                           th:text="${i + 1}"></a>
+                    </li>
+
+                    <li th:class="${currentPage == totalPages - 1 || totalPages == 0 ? 'page-item disabled' : 'page-item'}">
+                        <a class="page-link"
+                           th:href="@{/users(page=${currentPage + 1}, size=${pageSize}, sortField=${sortField}, sortDir=${sortDir})}"
+                           th:text="#{pagination.next}">Siguiente</a>
+                    </li>
+                </ul>
+            </nav>
+            <div th:unless="${totalElements == 0}" class="text-center mt-2">
+                <p th:text="#{msg.pagination.info(${currentPage + 1}, ${totalPages}, ${totalElements})}">Página X de Y (Z registros)</p>
+            </div>
+        </div>
+    </div>
+</main>
 
 <footer th:replace="fragments/footer :: footer"></footer>
+<div th:replace="fragments/scripts :: scripts"></div>
 </body>
 </html>

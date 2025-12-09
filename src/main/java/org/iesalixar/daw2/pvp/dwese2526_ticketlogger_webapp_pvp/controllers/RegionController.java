@@ -2,7 +2,10 @@ package org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.controllers;
 
 import jakarta.validation.Valid;
 import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.daos.RegionDAO;
+import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.dtos.RegionDTO; // Necesario para el listado
+import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.dtos.RegionDetailDTO;
 import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.entities.Region;
+import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.mappers.RegionMapper; // Necesario para el listado
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,10 +31,57 @@ public class RegionController {
     @Autowired
     private MessageSource messageSource;
 
+    // ===========================================================
+    // LISTADO (Paginación y Ordenación)
+    // ===========================================================
     @GetMapping("")
-    public String listRegions(Model model) {
-        List<Region> listRegions = regionDAO.listAllRegions();
-        model.addAttribute("listRegions", listRegions);
+    public String listRegions(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "sortField", defaultValue = "id") String sortField,
+            @RequestParam(name = "sortDir", defaultValue = "asc") String sortDir,
+            Model model, Locale locale) {
+
+        logger.info("Solicitando la lista de regiones... page={}, size={}, sortField={}, sortDir={}",
+                page, size, sortField, sortDir);
+
+        if (page < 0) page = 0;
+        if (size <= 0) size = 10;
+
+        try {
+            long totalElements = regionDAO.countRegions();
+            int totalPages = (int) Math.ceil((double) totalElements / size);
+
+            if (totalPages > 0 && page >= totalPages) page = totalPages - 1;
+
+            // 1. Llama al DAO con paginación y ordenación
+            List<Region> entities = regionDAO.listRegionsPage(page, size, sortField, sortDir);
+
+            // 2. Mapea a DTOs
+            List<RegionDTO> dtos = RegionMapper.toDTOList(entities);
+
+            // Atributos de la lista (usamos 'regions' y 'listRegions' por seguridad)
+            model.addAttribute("regions", dtos);
+            model.addAttribute("listRegions", dtos);
+
+            // Atributos de paginación y ordenación
+            model.addAttribute("currentPage", page);
+            model.addAttribute("pageSize", size);
+            model.addAttribute("totalPages", totalPages);
+            model.addAttribute("totalElements", totalElements);
+            model.addAttribute("sortField", sortField);
+            model.addAttribute("sortDir", sortDir);
+
+            // Atributo para invertir la dirección de ordenación
+            String reverseSortDir = sortDir.equalsIgnoreCase("asc") ? "desc" : "asc";
+            model.addAttribute("reverseSortDir", reverseSortDir);
+
+        } catch (Exception e) {
+            logger.error("Error al listar las regiones: {}", e.getMessage(), e);
+            model.addAttribute("errorMessage",
+                    messageSource.getMessage("msg.region-controller.list.error", null, locale));
+        }
+
         return "views/region/region-list";
     }
 
@@ -115,8 +165,48 @@ public class RegionController {
     }
 
     @GetMapping("/delete")
-    public String deleteRegion(@RequestParam("id") Long id) {
-        regionDAO.deleteRegion(id);
+    public String deleteRegion(@RequestParam("id") Long id, RedirectAttributes redirectAttributes, Locale locale) {
+        try {
+            regionDAO.deleteRegion(id);
+            logger.info("Región con ID {} eliminada con éxito.", id);
+        } catch (Exception e) {
+            logger.error("Error al eliminar la región con ID {}: {}", id, e.getMessage());
+            String errorMessage = messageSource.getMessage("msg.region-controller.delete.error", null, locale);
+            redirectAttributes.addFlashAttribute("errorMessage", errorMessage);
+        }
         return "redirect:/regions";
     }
+
+    // ===========================================================
+    // DETALLE
+    // ===========================================================
+    @GetMapping("/detail")
+    public String showDetail(@RequestParam("id") Long id,
+                             Model model, RedirectAttributes redirectAttributes,
+                             Locale locale) {
+
+        logger.info("Mostrando detalle región id={}", id);
+
+        try {
+            Region entity = regionDAO.getRegionById(id);
+
+            if (entity == null) {
+                redirectAttributes.addFlashAttribute("errorMessage",
+                        messageSource.getMessage("msg.region-controller.detail.notFound", null, locale));
+                return "redirect:/regions";
+            }
+
+            RegionDetailDTO dto = RegionMapper.toDetailDTO(entity);
+            model.addAttribute("region", dto);
+
+        } catch (Exception e) {
+            logger.error("Error al cargar detalle región: {}", e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    messageSource.getMessage("msg.region-controller.detail.error", null, locale));
+            return "redirect:/regions";
+        }
+
+        return "views/region/region-detail";
+    }
+
 }

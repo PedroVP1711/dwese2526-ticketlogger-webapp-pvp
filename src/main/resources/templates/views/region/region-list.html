@@ -4,35 +4,88 @@
 <body class="d-flex flex-column h-100">
 <header th:replace="fragments/header :: header"></header>
 
-<div class="container">
-    <h2 th:text="#{region.list.title}"></h2>
-    <a href="/regions/new" class="btn btn-success mb-3" th:text="#{region.add.new}"></a>
+<main class="container py-4">
+    <h2 th:text="#{region.list.title}">Listado de Regiones</h2>
 
-    <table class="table table-bordered">
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+
+    <a th:href="@{/regions/new}" class="btn btn-success mb-3" th:text="#{region.add.new}">Añadir Nueva Región</a>
+
+    <table class="table table-bordered table-hover">
         <thead>
         <tr>
-            <th th:text="#{region.id}"></th>
-            <th th:text="#{region.code}"></th>
-            <th th:text="#{region.name}"></th>
-            <th th:text="#{region.actions}"></th>
+            <th scope="col">
+                <a th:href="@{/regions(page=${currentPage}, size=${pageSize}, sortField='id', sortDir=${sortField == 'id' ? reverseSortDir : 'asc'})}">
+                    <span th:text="#{region.id}">ID</span>
+                    <span th:if="${sortField == 'id'}" th:text="${sortDir == 'asc' ? ' ▲' : ' ▼'}"></span>
+                </a>
+            </th>
+
+            <th scope="col">
+                <a th:href="@{/regions(page=${currentPage}, size=${pageSize}, sortField='code', sortDir=${sortField == 'code' ? reverseSortDir : 'asc'})}">
+                    <span th:text="#{region.code}">Código</span>
+                    <span th:if="${sortField == 'code'}" th:text="${sortDir == 'code' ? ' ▲' : ' ▼'}"></span>
+                </a>
+            </th>
+
+            <th scope="col">
+                <a th:href="@{/regions(page=${currentPage}, size=${pageSize}, sortField='name', sortDir=${sortField == 'name' ? reverseSortDir : 'asc'})}">
+                    <span th:text="#{region.name}">Nombre</span>
+                    <span th:if="${sortField == 'name'}" th:text="${sortDir == 'name' ? ' ▲' : ' ▼'}"></span>
+                </a>
+            </th>
+
+            <th scope="col" th:text="#{region.actions}">Acciones</th>
         </tr>
         </thead>
         <tbody>
-        <tr th:each="region : ${listRegions}">
-            <td th:text="${region.id}"></td>
-            <td th:text="${region.code}"></td>
-            <td th:text="${region.name}"></td>
-            <td>
-                <a th:href="@{/regions/edit(id=${region.id})}" class="btn btn-warning btn-sm" th:text="#{region.edit}"></a>
-                <a th:href="@{/regions/delete(id=${region.id})}" class="btn btn-danger btn-sm"
-                   th:text="#{region.delete}"
-                   onclick="return confirm('#{region.confirmDelete}')"></a>
+        <tr th:each="region : ${regions}"> <td th:text="${region.id}">1</td>
+            <td th:text="${region.code}">AND</td>
+            <td th:text="${region.name}">Andalucía</td>
+            <td class="d-flex gap-1">
+                <a th:href="@{/regions/detail(id=${region.id})}" class="btn btn-info btn-sm" th:text="#{region.detail}">Detalle</a>
+
+                <a th:href="@{/regions/edit(id=${region.id})}" class="btn btn-warning btn-sm" th:text="#{region.edit}">Editar</a>
+
+                <form th:action="@{/regions/delete}" method="get" style="display:inline;" onsubmit="return confirm('¿Estás seguro de que quieres eliminar esta región?')">
+                    <input type="hidden" name="id" th:value="${region.id}" />
+                    <button type="submit" class="btn btn-danger btn-sm" th:text="#{region.delete}">Eliminar</button>
+                </form>
             </td>
         </tr>
         </tbody>
     </table>
-</div>
+
+    <div th:if="${totalPages > 0}" class="row mt-3">
+        <div class="col-sm-12">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    <li th:class="${currentPage == 0 ? 'page-item disabled' : 'page-item'}">
+                        <a class="page-link"
+                           th:href="@{/regions(page=${currentPage - 1}, size=${pageSize}, sortField=${sortField}, sortDir=${sortDir})}"
+                           th:text="#{pagination.previous}">Anterior</a>
+                    </li>
+
+                    <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                        th:class="${currentPage == i ? 'page-item active' : 'page-item'}">
+                        <a class="page-link"
+                           th:href="@{/regions(page=${i}, size=${pageSize}, sortField=${sortField}, sortDir=${sortDir})}"
+                           th:text="${i + 1}"></a>
+                    </li>
+
+                    <li th:class="${currentPage == totalPages - 1 || totalPages == 0 ? 'page-item disabled' : 'page-item'}">
+                        <a class="page-link"
+                           th:href="@{/regions(page=${currentPage + 1}, size=${pageSize}, sortField=${sortField}, sortDir=${sortDir})}"
+                           th:text="#{pagination.next}">Siguiente</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</main>
 
 <footer th:replace="fragments/footer :: footer"></footer>
+<div th:replace="fragments/scripts :: scripts"></div>
 </body>
 </html>

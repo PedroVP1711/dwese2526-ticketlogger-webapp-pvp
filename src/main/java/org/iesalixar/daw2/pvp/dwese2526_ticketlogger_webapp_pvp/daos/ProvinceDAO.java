@@ -11,4 +11,6 @@ public interface ProvinceDAO {
     Province getProvinceById(Long id);
     boolean existsProvinceByCode(String code);
     boolean existsProvinceByCodeAndNotId(String code, Long id);
+    long countProvinces();
+    List<Province> listProvincesPage(int page, int size);
 }

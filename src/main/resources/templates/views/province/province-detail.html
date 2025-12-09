@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(#{msg.province-detail.title})"></head>
+
+<body class="d-flex flex-column h-100">
+
+<header th:replace="fragments/header :: header"></header>
+
+<main class="detail-page">
+    <div class="detail-card">
+        <h1 th:text="#{msg.province-detail.title}">Detalles de la Provincia</h1>
+
+        <div class="mb-3">
+            <label class="form-label font-weight-bold" th:text="#{msg.province-detail.id}"></label>
+            <p th:text="${province.id}"></p>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label font-weight-bold" th:text="#{msg.province-detail.code}"></label>
+            <p th:text="${province.code}"></p>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label font-weight-bold" th:text="#{msg.province-detail.name}"></label>
+            <p th:text="${province.name}"></p>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label font-weight-bold" th:text="#{msg.province-detail.region}"></label>
+            <p th:text="${province.regionName}"></p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a th:href="@{/provinces/edit(id=${province.id})}" class="btn btn-warning" th:text="#{msg.province-detail.edit}"></a>
+
+            <a th:href="@{/provinces}" class="btn btn-secondary" th:text="#{msg.province-detail.returnback}"></a>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="fragments/footer :: footer"></footer>
+<div th:replace="fragments/scripts :: scripts"></div>
+
+</body>
+</html>

@@ -16,10 +16,20 @@ public class UserController {
     @Autowired
     private UserDAO userDAO;
 
+// UserController.java
+
     @GetMapping("")
     public String listUsers(Model model) {
-        List<User> listUsers = userDAO.listAllUsers();
-        model.addAttribute("listUsers", listUsers);
+        // ... Tu lógica de paginación/sort
+
+        // CAMBIA "listUsers" por "users"
+        // model.addAttribute("listUsers", userPage.getContent()); // Si usas Page
+        // O:
+        List<User> userList = userDAO.listAllUsers();
+        model.addAttribute("users", userList); // <--- ¡Corregido!
+
+        // ... Las otras variables de paginación si las usas (totalPages, currentPage, etc.)
+
         return "views/user/user-list.html";
     }
 
@@ -54,5 +64,32 @@ public class UserController {
         userDAO.deleteUser(id);
         return "redirect:/users";
     }
+
+    // UserController.java
+
+// ... otros métodos ...
+
+    // Este método maneja la URL: /users/detail?id=X
+    @GetMapping("/detail")
+    public String showUserDetail(@RequestParam("id") Long id, Model model) {
+
+        // 1. Busca el usuario en la base de datos usando el ID que viene en la URL
+        User user = userDAO.getUserById(id);
+
+        // 2. Si el usuario existe, lo añade al "Modelo" con el nombre "user"
+        if (user != null) {
+            model.addAttribute("user", user);
+        } else {
+            // Opcional: manejar el caso en que el ID no exista
+            return "redirect:/users?error=notFound";
+        }
+
+        // 3. Indica a Spring que debe usar la plantilla "views/user/detail"
+        // (Asumiendo que tu archivo se llama detail.html y está en la ruta views/user/)
+        return "views/user/user-detail";
+    }
+
+// ... resto de métodos ...
+
 }
 
