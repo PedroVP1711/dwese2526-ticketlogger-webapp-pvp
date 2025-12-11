@@ -22,19 +22,11 @@
             </th>
 
             <th scope="col">
-                <a th:href="@{/users(page=${currentPage}, size=${pageSize}, sortField='username', sortDir=${sortField == 'username' ? reverseSortDir : 'asc'})}">
-                    <span th:text="#{user.username}">Username</span>
-                    <span th:if="${sortField == 'username'}" th:text="${sortDir == 'asc' ? ' ▲' : ' ▼'}"></span>
-                </a>
-            </th>
-
-            <th scope="col">
                 <a th:href="@{/users(page=${currentPage}, size=${pageSize}, sortField='email', sortDir=${sortField == 'email' ? reverseSortDir : 'asc'})}">
                     <span th:text="#{user.email}">Email</span>
                     <span th:if="${sortField == 'email'}" th:text="${sortDir == 'asc' ? ' ▲' : ' ▼'}"></span>
                 </a>
             </th>
-
             <th scope="col" th:text="#{user.active}">Activo</th>
             <th scope="col" th:text="#{user.locked}">Bloqueado</th>
             <th scope="col" th:text="#{user.email_verified}">Email Verificado</th>
@@ -45,12 +37,12 @@
         <tbody>
         <tr th:each="user : ${users}">
             <td th:text="${user.id}">1</td>
-            <td th:text="${user.username}">username</td>
+
             <td th:text="${user.email}">user@example.com</td>
 
             <td>
-                <span th:if="${user.active}" class="text-success">✔</span>
-                <span th:unless="${user.active}" class="text-danger">❌</span>
+                <span th:if="${user.enabled}" class="text-success">✔</span>
+                <span th:unless="${user.enabled}" class="text-danger">❌</span>
             </td>
             <td>
                 <span th:if="${user.accountNonLocked}" class="text-success">✔</span>
@@ -59,6 +51,9 @@
             <td>
                 <span th:if="${user.emailVerified}" class="text-success">✔</span>
                 <span th:unless="${user.emailVerified}" class="text-danger">❌</span>
+            </td>
+
+            <td class="d-flex gap-1">
             </td>
 
             <td class="d-flex gap-1">

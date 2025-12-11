@@ -8,19 +8,28 @@
 
 <main class="form-page">
     <div class="form-card">
+
+        <div class="text-center mb-3">
+            <img th:src="${user.userProfile.profileImagePath != null} ?
+                  ${user.userProfile.profileImagePath} :
+                  @{/images/avatar.svg}"
+                 alt="Avatar"
+                 class="img-thumbnail rounded-circle"
+                 style="width: 120px; height: 120px; object-fit: cover;">
+        </div>
+
         <h1 th:if="${user.id == null}" th:text="#{msg.user-form.add}">Añadir Usuario</h1>
         <h1 th:if="${user.id != null}" th:text="#{msg.user-form.edit}">Editar Usuario</h1>
 
         <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-        <form th:action="${user.id} == null ? @{/users/save} : @{/users/update}" th:object="${user}" method="post" class="mt-3">
-            <input type="hidden" th:field="*{id}" />
+        <form th:action="@{/users/save}"
+              th:object="${user}"
+              method="post"
+              enctype="multipart/form-data"
+              class="mt-3">
 
-            <div class="mb-3">
-                <label for="username" class="form-label" th:text="#{msg.user-form.username}">Nombre de Usuario</label>
-                <input type="text" id="username" th:field="*{username}" class="form-control" />
-                <div th:if="${#fields.hasErrors('username')}" class="text-danger" th:errors="*{username}"></div>
-            </div>
+            <input type="hidden" th:field="*{id}" />
 
             <div class="mb-3">
                 <label for="email" class="form-label" th:text="#{msg.user-form.email}">Correo Electrónico</label>
@@ -30,8 +39,8 @@
 
             <div class="mb-3">
                 <label for="passwordHash" class="form-label" th:text="#{msg.user-form.password}">Contraseña</label>
-                <input type="password" id="passwordHash" name="passwordHash" th:field="*{passwordHash}" class="form-control" />
-                <div th:if="${#fields.hasErrors('passwordHash')}" class="text-danger" th:errors="*{passwordHash}"></div>
+                <input type="password" id="passwordHash" name="passwordHash" th:field="*{password}" class="form-control" />
+                <div th:if="${#fields.hasErrors('password')}" class="text-danger" th:errors="*{password}"></div>
             </div>
 
             <hr class="mt-4 mb-3"/>
@@ -39,7 +48,7 @@
 
             <div class="row">
                 <div class="col-md-4 mb-3 form-check form-switch">
-                    <input type="checkbox" id="active" th:field="*{active}" class="form-check-input" role="switch"/>
+                    <input type="checkbox" id="active" th:field="*{enabled}" class="form-check-input" role="switch"/>
                     <label class="form-check-label" for="active" th:text="#{msg.user-form.active}">Activo</label>
                 </div>
                 <div class="col-md-4 mb-3 form-check form-switch">
@@ -63,6 +72,15 @@
                 </div>
             </div>
 
+            <div class="mb-3">
+                <label for="profileImageFile" class="form-label" th:text="#{msg.userProfile.field.profileImageUpload}"></label>
+                <input type="file"
+                       id="profileImageFile"
+                       th:field="*{userProfile.profileImageFile}"
+                       class="form-control"
+                       accept="image/*" />
+            </div>
+
             <div class="mt-4">
                 <button th:if="${user.id == null}" type="submit" class="btn btn-primary" th:text="#{msg.user-form.create}">Crear</button>
                 <button th:if="${user.id != null}" type="submit" class="btn btn-primary" th:text="#{msg.user-form.update}">Actualizar</button>
@@ -71,6 +89,7 @@
         </form>
     </div>
 </main>
+
 
 <footer th:replace="fragments/footer :: footer"></footer>
 <div th:replace="fragments/scripts :: scripts"></div>

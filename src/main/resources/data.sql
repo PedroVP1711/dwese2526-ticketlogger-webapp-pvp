@@ -20,16 +20,12 @@ INSERT IGNORE INTO regions (id, code, name) VALUES
 (18, '18', 'CEUTA Y MELILLA');
 -- data.sql (Script Corregido)
 
--- Inserta si no existe (ignora duplicados por UNIQUE username o id)
 INSERT IGNORE INTO users (
-    id, username, email, password_hash, active, account_non_locked,
-    last_password_change, password_expires_at, failed_login_attempts,
-    email_verified, must_change_password
+   id, email, password_hash, active, account_non_locked,
+   last_password_change, password_expires_at, failed_login_attempts,
+   email_verified, must_change_password
 ) VALUES
-(1, 'admin', 'admin@ticketlogger.com', 'admin123',  TRUE,  TRUE,  NOW(), DATE_ADD(NOW(), INTERVAL 3 MONTH), 0, TRUE,  FALSE),
-(2, 'jdoe', 'jdoe@ticketlogger.com', '1234',      TRUE,  TRUE,  NOW(), DATE_ADD(NOW(), INTERVAL 3 MONTH), 1, FALSE, FALSE),
-(3, 'maria', 'maria@ticketlogger.com', 'changeme',  TRUE,  TRUE,  NOW(), DATE_ADD(NOW(), INTERVAL 3 MONTH), 0, TRUE,  TRUE ),
-(4, 'blockeduser', 'blocked@ticketlogger.com', 'secret',    FALSE, FALSE, NOW(), DATE_ADD(NOW(), INTERVAL 3 MONTH), 5, FALSE, FALSE);
-
--- Es fundamental terminar la sentencia con punto y coma (;)
--- si el script contiene una sola sentencia, aunque se recomienda usarlo siempre.
+(1, 'admin@app.local',        'admin123',  TRUE,  TRUE,  NOW(), DATE_ADD(NOW(), INTERVAL 3 MONTH), 0, TRUE,  FALSE),
+(2, 'jdoe@app.local',         '1234',      TRUE,  TRUE,  NOW(), DATE_ADD(NOW(), INTERVAL 3 MONTH), 1, FALSE, FALSE),
+(3, 'maria@app.local',        'changeme',  TRUE,  TRUE,  NOW(), DATE_ADD(NOW(), INTERVAL 3 MONTH), 0, TRUE,  TRUE ),
+(4, 'blockeduser@app.local',  'secret',    FALSE, FALSE, NOW(), DATE_ADD(NOW(), INTERVAL 3 MONTH), 5, FALSE, FALSE);

@@ -1,18 +1,25 @@
 package org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.dtos;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.EqualsAndHashCode;
 
 @Data
+@Builder
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = true) // Asegura que equals/hashCode incluya los campos de UserDTO
-public class UserDetailDTO extends UserDTO {
+@AllArgsConstructor
+public class UserDetailDTO {
 
-    // Hereda id, username, email de UserDTO gracias a @Data en UserDTO.
+    private Long id;
+    private String email;
+    private String username;
 
-    // Si no hay campos extra, solo se necesita este constructor para el mapeo.
-    public UserDetailDTO(Long id, String username, String email) {
-        super(id, username, email);
-    }
+    // Todos los campos de perfil necesarios para el mapeo
+    private String firstName;
+    private String lastName;
+    private String phoneNumber;
+    private String profileImage;
+    private String bio;
+    private String locale;
 }
