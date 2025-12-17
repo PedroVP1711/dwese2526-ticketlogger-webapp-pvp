@@ -23,7 +23,7 @@ RUN mvn -q -e -B dependency:go-offline
 # Ahora copiamos el código fuente completo al contenedor.
 # Esto validó solo esta capa y las siguientes cuando cambiamos código,
 # pero mantiene cacheadas las dependencias si el pom no ha cambiado.
-COPY src /src
+COPY src ./src
 
 # Compilamos y generamos el .jar del proyecto.
 # Usamos:

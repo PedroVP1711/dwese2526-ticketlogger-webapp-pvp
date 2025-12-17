@@ -30,13 +30,10 @@ COPY nginx.conf /etc/nginx/nginx.conf
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 
 # Damos permisos de ejecución al script de entrada.
-# Es imprescindible que el archivo sea ejecutable para poder usarlo
 # como ENTRYPOINT, de lo contrario el contenedor fallaría al arrancar.
 RUN chmod +x /docker-entrypoint.sh
 
 # Definimos el ENTRYPOINT del contenedor:
-# - Cuando se arranque el contenedor, se ejecutará /docker-entrypoint.sh.
-# - Usamos la forma "exec" (array JSON) en lugar de una cadena, lo que evita
 #   problemas de interpretación de argumentos por parte de una shell intermedia.
 # - Este entrypoint lo normal es que al final se haga:
 #   exec nginx -g 'daemon off;' para que Nginx pase a ser el proceso PID 1 del contenedor y se quede en foreground.

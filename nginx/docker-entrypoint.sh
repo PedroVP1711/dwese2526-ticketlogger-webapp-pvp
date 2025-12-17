@@ -1,6 +1,7 @@
 #!/bin/sh
 # Shell: Indica que este script se debe ejecutar con 'sh' (Bourne Shell).
 
+set -e
 # --- SECCIÓN DE CONFIGURACIÓN DE CERTIFICADOS ---
 # Directorio donde guarda la ruta donde se almacenarán los certificados y la clave privada.
 # Es un directorio que mapea el contenedor a la máquina anfitriona (host).
@@ -22,12 +23,11 @@ CRT_FILE="$CERT_DIR/server.crt"
 # Se usa un operador lógico de cadena '&&' (AND lógico) y '||' (OR lógico).
 # $? es el código de salida del comando anterior (0 si es exitoso).
 if [ ! -f "$KEY_FILE" ] || [ ! -f "$CRT_FILE" ]; then
-    echo "📜 El certificado o la clave privada no han sido hallados..."
-    echo "⚙️ [nginx] Certificado no encontrado, generando uno autofirmado..."
+  echo "[nginx] Certificado no encontrado, generando uno autofirmado..."
 
     # Creamos el directorio de certificados por si no existe.
     # -p: evita errores si el directorio ya existe (no pasa nada).
-    mkdir -p "$CERT_DIR"
+  mkdir -p "$CERT_DIR"
 
     # Comando 'openssl req' para generar un certificado autofirmado.
     # Desglose de opciones:
@@ -46,21 +46,21 @@ if [ ! -f "$KEY_FILE" ] || [ ! -f "$CRT_FILE" ]; then
     # O (Organization): TicketLogger
     # OU (Organizational Unit): DAMA
     # CN (Common Name): localhost (usa 'localhost' porque es para desarrollo local).
-    openssl req -x509 -nodes -days 365 \
+  openssl req -x509 -nodes -days 365 \
     -newkey rsa:2048 \
     -keyout "$KEY_FILE" \
     -out "$CRT_FILE" \
-    -subj /C=ES/ST=Andalucia/L=Castil de la Cuesta/O=TicketLogger/OU=DAMA/CN=localhost
+    -subj "/C=ES/ST=Andalucia/L=Castil de la Cuesta/O=TicketLogger/OU=DAMA/CN=localhost"
 else
     # Si ya existen tanto la clave como el certificado, no los regeneramos.
     # Esto es importante cuando usamos un volumen para /etc/nginx/certs:
     # Evita la regeneración en cada inicio, acelerando reinicios de contenedor.
-    echo "✅ [nginx] Certificado ya existe, reutilizándolo..."
+    echo "[nginx] Certificado ya existe, reutilizándolo..."
 fi
 
 # --- INICIO DE NGINX ---
 # Mensaje informativo de que vamos a lanzar Nginx.
-echo "🚀 [nginx] Arrancando Nginx..."
+echo "[nginx] Arrancando Nginx..."
 
 # Lanzamos Nginx en primer plano:
 # exec: reemplaza el proceso actual (el script shell) con el proceso de Nginx.
