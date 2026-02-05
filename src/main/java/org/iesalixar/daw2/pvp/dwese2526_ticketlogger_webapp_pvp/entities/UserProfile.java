@@ -1,7 +1,10 @@
 package org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.entities;
-
+@Entity
 public class UserProfile {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     private User user;
     private String firstName;
     private String lastName;
