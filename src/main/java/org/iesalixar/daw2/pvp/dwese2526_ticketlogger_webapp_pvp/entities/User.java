@@ -15,7 +15,6 @@ public class User {
 
     @OneToOne
     private UserProfile userProfile;
-    }
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
