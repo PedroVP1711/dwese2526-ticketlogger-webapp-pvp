@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import jakarta.persistence.*;
 
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -12,6 +13,10 @@ import jakarta.persistence.*;
 @Table(name = "users")
 public class User {
 
+    @OneToOne
+    private UserProfile userProfile;
+    }
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
