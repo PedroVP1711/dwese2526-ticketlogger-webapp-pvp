@@ -38,10 +38,22 @@ public class UserProfile {
     @Column(name = "locale")
     private String locale;
 
+    private String profileImagePath;
+
+    
     @Transient
     private MultipartFile profileImageFile;
 
     public String getProfileImage() {
         return profileImage; // Devuelve la ruta de la imagen de perfil
     }
+
+    public String getProfileImagePath() {
+    return profileImagePath;
+}
+
+public void setProfileImagePath(String profileImagePath) {
+    this.profileImagePath = profileImagePath;
+}
+
 }
