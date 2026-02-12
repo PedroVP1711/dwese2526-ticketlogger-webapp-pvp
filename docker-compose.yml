@@ -6,8 +6,6 @@ services:
       - MARIADB_DATABASE=${DB_DATABASE}
       - MARIADB_USER=${DB_USER}
       - MARIADB_PASSWORD=${DB_PASSWORD}
-    ports:
-      - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
 
@@ -40,6 +38,8 @@ services:
     # - Docker levantará primero 'db' y luego 'ticket-logger-app'.
     depends_on:
       - db
+    ports:
+      - "8080:8080"
     # Volúmenes montados en la app:
     # - 'app_uploads' es un volumen nombrado definido en la sección 'volumes:' al final.
     # - Se monta sobre /app/uploads (la ruta que usamos en el Dockerfile y APP_UPLOAD_PATH).
