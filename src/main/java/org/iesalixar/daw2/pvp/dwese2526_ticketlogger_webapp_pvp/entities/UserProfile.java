@@ -44,6 +44,18 @@ public class UserProfile {
         this.user = user;
     }
 
+    public Long getId() {
+    return user != null ? user.getId() : null;
+}
+
+public void setId(Long id) {
+    if (user == null) {
+        user = new User();
+    }
+    user.setId(id);
+}
+
+
     public String getProfileImagePath() { return profileImagePath; }
     public void setProfileImagePath(String profileImagePath) { this.profileImagePath = profileImagePath; }
 }
