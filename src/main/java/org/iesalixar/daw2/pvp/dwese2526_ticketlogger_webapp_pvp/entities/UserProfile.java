@@ -1,46 +1,39 @@
-package org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.entities;
+@Data
+@NoArgsConstructor
 @Entity
+@Table(name = "user_profiles")
 public class UserProfile {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @MapsId
+    @OneToOne(fetch = FetchType.LAZY)
     private User user;
+
+    @Column(name = "Id", nullable = false)
+    private Long Id;
+
+    @Column(name = "first_name", nullable = false)
     private String firstName;
+
+    @Column(name = "last_name", nullable = false)
     private String lastName;
+
+    @Column(name = "phone_number")
     private String phoneNumber;
+
+    @Column(name = "profile_image")
+    private String profileImage;
+
+    @Column(name = "bio")
     private String bio;
-    private String profileImagePath;
+
+    @Column(name = "locale")
     private String locale;
 
-    // Constructor vacío
-    public UserProfile() {}
+    @Transient
+    private MultipartFile profileImageFile;
 
-    // Constructor con User
-    public UserProfile(User user) {
-        this.user = user;
+    public String getProfileImage() {
+        return profileImage; // Devuelve la ruta de la imagen de perfil
     }
-
-    // Getters y setters
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
-
-    public String getFirstName() { return firstName; }
-    public void setFirstName(String firstName) { this.firstName = firstName; }
-
-    public String getLastName() { return lastName; }
-    public void setLastName(String lastName) { this.lastName = lastName; }
-
-    public String getPhoneNumber() { return phoneNumber; }
-    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
-
-    public String getBio() { return bio; }
-    public void setBio(String bio) { this.bio = bio; }
-
-    public String getProfileImagePath() { return profileImagePath; }
-    public void setProfileImagePath(String profileImagePath) { this.profileImagePath = profileImagePath; }
-
-    public String getLocale() { return locale; }
-    public void setLocale(String locale) { this.locale = locale; }
-
 }
