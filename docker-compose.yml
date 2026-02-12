@@ -61,13 +61,6 @@ services:
       - "80:80"
       - "443:443"
     # Volumen para los certificados TLS:
-    volumes:
-      - certs:/etc/nginx/certs:rw
 
     # Definición del volumen nombrado 'certs'
     # La configuración adicional (como driver) se omitió, usando el default.
-
-volumes:
-  db_data:
-  app_uploads:
-  certs:
