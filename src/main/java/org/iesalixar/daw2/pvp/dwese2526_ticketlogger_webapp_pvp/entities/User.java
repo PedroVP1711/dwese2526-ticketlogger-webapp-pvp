@@ -1,43 +1,74 @@
 package org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.entities;
 
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import jakarta.persistence.*;
 
+import java.time.Instant;
+import java.util.Set;
 
+@Entity
+@Table(name = "users")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
-@Table(name = "users")
 public class User {
 
-    @OneToOne
-    private UserProfile userProfile;
-    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false, unique = true)
+    private String username;
+
+    @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(name = "password_hash", nullable = false)
-    private String password;
+    // 🔹 Relación 1–1 con UserProfile (lado NO propietario)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = false)
+    private UserProfile profile;
 
-    // *** CORRECCIÓN DE MAPPING: AÑADIR @Column(name="...") ***
+    // 🔹 Roles (muchos a muchos)
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set<Role> roles;
 
-    @Column(name = "active")
-    private boolean enabled = true;
+    // Password
+    @Column(nullable = false)
+    private String passwordHash;
 
-    @Column(name = "account_non_locked") // <--- Usando el nombre de la Captura 1
+    // Estado de la cuenta
+    private boolean active = true;
     private boolean accountNonLocked = true;
 
-    @Column(name = "email_verified") // <--- Usando el nombre de la Captura 1
+    // Seguridad
+    private int failedLoginAttempts = 0;
     private boolean emailVerified = false;
-    // Relación 1:1 con UserProfile
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private UserProfile userProfile;
+    private boolean mustChangePassword = false;
 
+    // Gestión de contraseñas
+    private Instant lastPasswordChange;
+    private Instant passwordExpiresAt;
+
+    // Constructor reducido
+    public User(Long id, String username, String email, String passwordHash) {
+        this.id = id;
+        this.username = username;
+        this.email = email;
+        this.passwordHash = passwordHash;
+    }
+
+    // 🔹 Helper seguro para la imagen
+    public String getProfileImage() {
+        return profile != null ? profile.getProfileImage() : null;
+    }
+
+    public Boolean getEmailVerified() {
+        return emailVerified;
+    }
 }
