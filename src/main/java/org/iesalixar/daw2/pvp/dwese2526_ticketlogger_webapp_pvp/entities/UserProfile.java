@@ -49,4 +49,5 @@ public String getProfileImagePath() {
 public void setProfileImagePath(String profileImagePath) {
     this.profileImagePath = profileImagePath;
 }
+}
 
