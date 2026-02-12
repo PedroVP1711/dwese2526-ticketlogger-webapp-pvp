@@ -27,7 +27,7 @@ public class User {
 
     // 🔹 Relación 1–1 con UserProfile (lado NO propietario)
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = false)
-    private UserProfile profile;
+private UserProfile userProfile;
 
     // 🔹 Roles (muchos a muchos)
     @ManyToMany(fetch = FetchType.EAGER)
