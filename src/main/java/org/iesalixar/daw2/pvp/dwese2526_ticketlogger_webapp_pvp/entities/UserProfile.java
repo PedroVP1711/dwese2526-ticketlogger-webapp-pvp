@@ -40,8 +40,13 @@ public class UserProfile {
 
     @Transient
     private MultipartFile profileImageFile;
+private String profileImagePath;
 
-    public String getProfileImage() {
-        return profileImage; // Devuelve la ruta de la imagen de perfil
-    }
+public String getProfileImagePath() {
+    return profileImagePath;
 }
+
+public void setProfileImagePath(String profileImagePath) {
+    this.profileImagePath = profileImagePath;
+}
+
