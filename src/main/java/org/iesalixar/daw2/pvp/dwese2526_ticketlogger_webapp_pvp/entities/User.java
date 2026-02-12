@@ -65,7 +65,7 @@ private UserProfile userProfile;
 
     // 🔹 Helper seguro para la imagen
     public String getProfileImage() {
-        return profile != null ? profile.getProfileImage() : null;
+        return userProfile != null ? userProfile.getProfileImage() : null;
     }
 
     public Boolean getEmailVerified() {
