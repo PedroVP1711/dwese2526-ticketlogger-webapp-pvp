@@ -1,11 +1,3 @@
-package org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.entities;
-
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import jakarta.persistence.*;
-import org.springframework.web.multipart.MultipartFile;
-
-
 @Data
 @NoArgsConstructor
 @Entity
@@ -16,9 +8,6 @@ public class UserProfile {
     @MapsId
     @OneToOne(fetch = FetchType.LAZY)
     private User user;
-
-    @Column(name = "Id", nullable = false)
-    private Long Id;
 
     @Column(name = "first_name", nullable = false)
     private String firstName;
@@ -40,14 +29,16 @@ public class UserProfile {
 
     @Transient
     private MultipartFile profileImageFile;
-private String profileImagePath;
 
-public String getProfileImagePath() {
-    return profileImagePath;
+    private String profileImagePath;
+
+    // Constructor que arregla tu error
+    public UserProfile(User user) {
+        this.user = user;
+    }
+
+    public String getProfileImagePath() { return profileImagePath; }
+    public void setProfileImagePath(String profileImagePath) { this.profileImagePath = profileImagePath; }
 }
 
-public void setProfileImagePath(String profileImagePath) {
-    this.profileImagePath = profileImagePath;
-}
-}
 
