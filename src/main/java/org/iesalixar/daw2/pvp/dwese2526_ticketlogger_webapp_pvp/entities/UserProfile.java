@@ -1,3 +1,10 @@
+package org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.entities;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import org.springframework.web.multipart.MultipartFile;
+
 @Data
 @NoArgsConstructor
 @Entity
