@@ -52,6 +52,11 @@ public class UserProfile {
     return profileImagePath;
 }
 
+    public UserProfile(User user) {
+        this.user = user;
+        this.Id = user.getId();
+    }
+
 public void setProfileImagePath(String profileImagePath) {
     this.profileImagePath = profileImagePath;
 }
