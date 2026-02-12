@@ -47,26 +47,6 @@ services:
     volumes:
       - app_uploads:/app/uploads
 
-  proxy:
-    # Servicio de Nginx que actúa como reverse proxy y termina TLS (HTTPS).
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile
-    container_name: ticket-logger-proxy
-    # Este servicio depende de que la app esté levantada.
-    depends_on:
-      - ticket-logger-app
-    # Mapeo de puertos del host al contenedor:
-    ports:
-      - "80:80"
-      - "443:443"
-    # Volumen para los certificados TLS:
-    volumes:
-      - certs:/etc/nginx/certs:rw
-
-    # Definición del volumen nombrado 'certs'
-    # La configuración adicional (como driver) se omitió, usando el default.
-
 volumes:
   db_data:
   app_uploads:
