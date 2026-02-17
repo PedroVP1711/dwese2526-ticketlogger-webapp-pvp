@@ -7,6 +7,10 @@ public interface UserDAO {
 
     List<User> listAllUsers();
 
+    List<User> listUsersPage(int page, int size, String sortField, String sortDir);
+
+    long countUsers();
+
     void insertUser(User user);
 
     void updateUser(User user);
@@ -14,6 +18,14 @@ public interface UserDAO {
     void deleteUser(Long id);
 
     User getUserById(Long id);
+
+    boolean existsUserByEmail(String email);
+
+    boolean existsUserByEmailAndNotId(String email, Long id);
+
+    User getUserByEmail(String email);
+
+    User findById(Long userId);
+
+
 }
-
-

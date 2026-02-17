@@ -1,119 +1,195 @@
 package org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.daos;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
 import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.entities.User;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 
 @Repository
+@Transactional
 public class UserDAOImpl implements UserDAO {
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private static final Logger logger = LoggerFactory.getLogger(UserDAOImpl.class);
 
-    // RowMapper para mapear todas las columnas de la tabla 'users' a la entidad User
-    private final RowMapper<User> userRowMapper = new RowMapper<User>() {
-        @Override
-        public User mapRow(ResultSet rs, int rowNum) throws SQLException {
-            User user = new User();
-            user.setId(rs.getLong("id"));
-            user.setUsername(rs.getString("username"));
-            user.setEmail(rs.getString("email"));
+    @PersistenceContext
+    private EntityManager entityManager;
 
-            // CORRECCIÓN CLAVE: Usar 'password_hash'
-            user.setPasswordHash(rs.getString("password_hash"));
+    // --- Métodos de Listado y Conteo ---
 
-            // Mapeo de los nuevos campos de seguridad
-            user.setActive(rs.getBoolean("active"));
-            user.setAccountNonLocked(rs.getBoolean("account_non_locked"));
-            user.setLastPasswordChange(rs.getTimestamp("last_password_change").toInstant());
-
-            // password_expires_at es NULLABLE, hay que comprobar
-            user.setPasswordExpiresAt(rs.getTimestamp("password_expires_at") != null ?
-                    rs.getTimestamp("password_expires_at").toInstant() : null);
-
-            user.setFailedLoginAttempts(rs.getInt("failed_login_attempts"));
-            user.setEmailVerified(rs.getBoolean("email_verified"));
-            user.setMustChangePassword(rs.getBoolean("must_change_password"));
-
-            return user;
-        }
-    };
-
-
-    // ----------------------------------------
-    // MÉTODOS CRUD
-    // ----------------------------------------
+    // UserDAOImpl.java
+// UserDAOImpl.java
 
     @Override
+    @Transactional(readOnly = true)
     public List<User> listAllUsers() {
-        String query = "SELECT * FROM users ORDER BY username ASC";
-        // Usamos el RowMapper completo
-        return jdbcTemplate.query(query, userRowMapper);
+        try {
+            TypedQuery<User> query = entityManager.createQuery("SELECT u FROM User u ORDER BY u.id", User.class);
+            return query.getResultList();
+        } catch (jakarta.persistence.PersistenceException pe) {
+            // Atrapa la excepción más específica de JPA.
+            logger.error("Error de Persistencia (JPA) al listar usuarios. La causa raíz es:", pe);
+            throw pe; // Volvemos a lanzar la excepción para que Spring la capture y haga rollback,
+            // pero ahora la tenemos registrada.
+        } catch (Exception e) {
+            logger.error("Error GENÉRICO al listar usuarios.", e);
+            throw e; // Volvemos a lanzar la excepción.
+        }
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<User> listUsersPage(int page, int size, String sortField, String sortDir) {
+        if (page < 0 || size <= 0) {
+            logger.warn("Parámetros de paginación inválidos: página={}, tamaño={}", page, size);
+            return List.of();
+        }
+
+        String jpql = "SELECT u FROM User u ORDER BY u." + sortField + " " + sortDir;
+
+        try {
+            TypedQuery<User> query = entityManager.createQuery(jpql, User.class);
+            query.setFirstResult(page * size); // Índice de inicio = página * tamaño
+            query.setMaxResults(size);         // Número máximo de resultados (tamaño de la página)
+            return query.getResultList();
+        } catch (Exception e) {
+            logger.error("Error al listar usuarios paginados. Campo de ordenación: {}", sortField, e);
+            return List.of();
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countUsers() {
+        try {
+            TypedQuery<Long> query = entityManager.createQuery("SELECT COUNT(u) FROM User u", Long.class);
+            return query.getSingleResult();
+        } catch (Exception e) {
+            logger.error("Error al contar el número de usuarios.", e);
+            return 0;
+        }
+    }
+
+    // --- Métodos de Inserción ---
+
+    @Override
+    @Transactional
     public void insertUser(User user) {
-        String query = "INSERT INTO users (" +
-                "username, email, password_hash, active, account_non_locked, " +
-                "last_password_change, password_expires_at, failed_login_attempts, " +
-                "email_verified, must_change_password" +
-                ") VALUES (?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?)";
-
-        // El campo password_expires_at debe ser un valor de fecha o NULL.
-        // Si quieres usarlo como en data.sql, necesitarías un DAO más complejo o hacerlo en el servicio.
-        // Aquí lo simplificamos (se insertará con los valores por defecto si no se proporcionan, pero usamos los campos)
-        jdbcTemplate.update(query,
-                user.getUsername(),
-                user.getEmail(),
-                user.getPasswordHash(), // Usamos el campo con hash
-                user.isActive(),
-                user.isAccountNonLocked(),
-                user.getPasswordExpiresAt(), // Si es null, funcionará
-                user.getFailedLoginAttempts(),
-                user.isEmailVerified(),
-                user.isMustChangePassword()
-        );
+        if (user == null) {
+            logger.error("No se puede insertar un usuario nulo.");
+            return;
+        }
+        try {
+            entityManager.persist(user);
+            logger.info("Usuario insertado correctamente con ID: {}", user.getId());
+        } catch (Exception e) {
+            logger.error("Error al insertar el usuario: {}", user.getEmail(), e);
+        }
     }
 
+    // --- Métodos de Actualización y Eliminación ---
+
     @Override
+    @Transactional
     public void updateUser(User user) {
-        String sql = "UPDATE users SET " +
-                "username = ?, email = ?, password_hash = ?, active = ?, " +
-                "account_non_locked = ?, password_expires_at = ?, failed_login_attempts = ?, " +
-                "email_verified = ?, must_change_password = ? " +
-                "WHERE id = ?";
-
-        // La actualización de last_password_change debe manejarse con lógica de negocio aparte
-        jdbcTemplate.update(sql,
-                user.getUsername(),
-                user.getEmail(),
-                user.getPasswordHash(),
-                user.isActive(),
-                user.isAccountNonLocked(),
-                user.getPasswordExpiresAt(),
-                user.getFailedLoginAttempts(),
-                user.isEmailVerified(),
-                user.isMustChangePassword(),
-                user.getId()
-        );
+        if (user == null || user.getId() == null) {
+            logger.error("No se puede actualizar un usuario nulo o sin ID.");
+            return;
+        }
+        try {
+            entityManager.merge(user);
+            logger.info("Usuario con ID {} actualizado correctamente.", user.getId());
+        } catch (Exception e) {
+            logger.error("Error al actualizar el usuario con ID {}: {}", user.getId(), e);
+        }
     }
 
     @Override
+    @Transactional
     public void deleteUser(Long id) {
-        String query = "DELETE FROM users WHERE id = ?";
-        jdbcTemplate.update(query, id);
+        if (id == null) return;
+        try {
+            User user = entityManager.find(User.class, id);
+            if (user != null) {
+                entityManager.remove(user);
+                logger.info("Usuario con ID {} eliminado correctamente.", id);
+            } else {
+                logger.warn("Intento de eliminar usuario con ID {} que no existe.", id);
+            }
+        } catch (Exception e) {
+            logger.error("Error al eliminar el usuario con ID {}: {}", id, e);
+        }
+    }
+
+    // --- Métodos de Búsqueda por ID y Email ---
+
+    @Override
+    @Transactional(readOnly = true)
+    public User findById(Long id) {
+        if (id == null) return null;
+        return entityManager.find(User.class, id);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public User getUserById(Long id) {
-        String query = "SELECT * FROM users WHERE id = ?";
-        // Usamos el RowMapper completo
-        return jdbcTemplate.queryForObject(query, new Object[]{id}, userRowMapper);
+        return findById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public User getUserByEmail(String email) {
+        if (email == null) return null;
+        try {
+            TypedQuery<User> query = entityManager.createQuery(
+                    "SELECT u FROM User u WHERE u.email = :email", User.class);
+            query.setParameter("email", email);
+            return query.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        } catch (Exception e) {
+            logger.error("Error al obtener usuario por email: {}", email, e);
+            return null;
+        }
+    }
+
+    // --- Métodos de Existencia (Validación) ---
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsUserByEmail(String email) {
+        if (email == null) return false;
+        try {
+            TypedQuery<Long> query = entityManager.createQuery(
+                    "SELECT COUNT(u) FROM User u WHERE u.email = :email", Long.class);
+            query.setParameter("email", email);
+            return query.getSingleResult() > 0;
+        } catch (Exception e) {
+            logger.error("Error al verificar la existencia del usuario por email: {}", email, e);
+            return false;
+        }
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsUserByEmailAndNotId(String email, Long id) {
+        if (email == null) return false;
+        try {
+            TypedQuery<Long> query = entityManager.createQuery(
+                    "SELECT COUNT(u) FROM User u WHERE u.email = :email AND u.id <> :id", Long.class);
+            query.setParameter("email", email);
+            query.setParameter("id", id);
+            return query.getSingleResult() > 0;
+        } catch (Exception e) {
+            logger.error("Error al verificar la existencia del usuario por email y no ID: {}", email, e);
+            return false;
+        }
     }
 }

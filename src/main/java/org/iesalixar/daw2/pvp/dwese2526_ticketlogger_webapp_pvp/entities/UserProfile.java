@@ -1,0 +1,66 @@
+package org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.entities;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import org.springframework.web.multipart.MultipartFile;
+
+@Data
+@NoArgsConstructor
+@Entity
+@Table(name = "user_profiles")
+public class UserProfile {
+
+    @Id
+    @MapsId
+    @OneToOne(fetch = FetchType.LAZY)
+    private User user;
+
+    @Column(name = "first_name", nullable = false)
+    private String firstName;
+
+    @Column(name = "last_name", nullable = false)
+    private String lastName;
+
+    @Column(name = "phone_number")
+    private String phoneNumber;
+
+    @Column(name = "profile_image")
+    private String profileImagePath;
+
+
+    @Column(name = "bio")
+    private String bio;
+
+    @Column(name = "locale")
+    private String locale;
+
+    @Transient
+    private MultipartFile profileImageFile;
+
+
+    // Constructor que arregla tu error
+    public UserProfile(User user) {
+        this.user = user;
+    }
+
+    public Long getId() {
+        return user != null ? user.getId() : null;
+    }
+
+    public void setId(Long id) {
+        if (user == null) {
+            user = new User();
+        }
+        user.setId(id);
+    }
+
+
+    public String getProfileImage() {
+        return profileImagePath;
+    }
+
+    public void setProfileImage(String profileImage) {
+        this.profileImagePath = profileImage;
+    }
+}
