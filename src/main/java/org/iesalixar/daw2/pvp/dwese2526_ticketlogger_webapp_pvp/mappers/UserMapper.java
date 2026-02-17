@@ -12,10 +12,7 @@ public class UserMapper {
 
     public static UserDTO toDTO(User entity) {
         if (entity == null) return null;
-        // CORRECCIÓN: Usar getEmail() en lugar de getUsername()
-        // Asumo que UserDTO tiene el constructor (Long id, String username, String email)
-        // El campo 'username' en el DTO será rellenado con el valor del 'email' de la entidad.
-        return new UserDTO(entity.getId(), entity.getEmail(), entity.getEmail()); // <-- Corregido (antes usaba getUsername())
+   return new UserDTO(entity.getId(), entity.getEmail(), entity.getEmail());
     }
 
     public static List<UserDTO> toDTOList(List<User> entities) {
@@ -23,25 +20,28 @@ public class UserMapper {
     }
 
     public static UserDetailDTO toDetailDTO(User entity) {
-        if (entity == null) {
-            return null;
+        if (entity == null) return null;
+
+        UserDetailDTO dto = new UserDetailDTO();
+        dto.setId(entity.getId());
+        dto.setEmail(entity.getEmail());
+        dto.setPasswordHash(entity.getPasswordHash());
+        dto.setActive(entity.getActive());
+        dto.setLastPasswordChange(entity.getLastPasswordChange());
+        dto.setFailedLoginAttempts(entity.getFailedLoginAttempts());
+        dto.setEmailVerified(entity.getEmailVerified());
+        dto.setMustChangePassword(entity.getMustChangePassword());
+
+        UserProfile profile = entity.getProfile();
+
+        if (profile != null) {
+            dto.setFirstName(profile.getFirstName());
+            dto.setLastName(profile.getLastName());
+            dto.setPhoneNumber(profile.getPhoneNumber());
+            dto.setProfileImage(profile.getProfileImage());
+            dto.setBio(profile.getBio());
+            dto.setLocale(profile.getLocale());
         }
-
-        UserProfile profile = entity.getUserProfile();
-
-        return UserDetailDTO.builder()
-                .id(entity.getId())
-                .email(entity.getEmail())
-                // CORRECCIÓN: Usar getEmail() en lugar de getUsername()
-                .username(entity.getEmail()) // <-- Corregido (antes usaba getUsername())
-
-                // Extracción segura de datos de perfil
-                .firstName(profile != null ? profile.getFirstName() : null)
-                .lastName(profile != null ? profile.getLastName() : null)
-                .phoneNumber(profile != null ? profile.getPhoneNumber() : null)
-                .profileImage(profile != null ? profile.getProfileImagePath() : null)
-                .bio(profile != null ? profile.getBio() : null)
-                .locale(profile != null ? profile.getLocale() : null)
-                .build();
+        return dto;
     }
 }

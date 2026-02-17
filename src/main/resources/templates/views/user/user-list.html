@@ -22,13 +22,6 @@
             </th>
 
             <th scope="col">
-                <a th:href="@{/users(page=${currentPage}, size=${pageSize}, sortField='username', sortDir=${sortField == 'username' ? reverseSortDir : 'asc'})}">
-                    <span th:text="#{user.username}">Username</span>
-                    <span th:if="${sortField == 'username'}" th:text="${sortDir == 'asc' ? ' ▲' : ' ▼'}"></span>
-                </a>
-            </th>
-
-            <th scope="col">
                 <a th:href="@{/users(page=${currentPage}, size=${pageSize}, sortField='email', sortDir=${sortField == 'email' ? reverseSortDir : 'asc'})}">
                     <span th:text="#{user.email}">Email</span>
                     <span th:if="${sortField == 'email'}" th:text="${sortDir == 'asc' ? ' ▲' : ' ▼'}"></span>
@@ -45,7 +38,6 @@
         <tbody>
         <tr th:each="user : ${users}">
             <td th:text="${user.id}">1</td>
-            <td th:text="${user.username}">username</td>
             <td th:text="${user.email}">user@example.com</td>
 
             <td>

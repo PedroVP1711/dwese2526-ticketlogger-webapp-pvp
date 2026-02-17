@@ -1,25 +1,39 @@
 package org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.dtos;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class UserProfileFormDTO {
 
     private Long userId;
+
     private String email;
+
+    @NotBlank(message = "{msg.userProfile.firstName.notblank}")
+    @Size(max = 100, message = "{msg.userProfile.firstname.size}")
     private String firstName;
+
+    @NotBlank(message = "{msg.userProfile.lastName.notblank}")
+    @Size(max = 100, message = "{msg.userProfile.lastname.size}")
     private String lastName;
+
+    @Size(max = 30, message = "{msg.userProfile.phoneNumber.size}")
     private String phoneNumber;
-    private String bio;
-    private String locale;
 
-    // Imagen
-    private MultipartFile profileImageFile;
-
-    // Para mostrar la imagen actual en el formulario (si existe)
+    @Size(max = 255, message = "{msg.userProfile.profileImage.size}")
     private String profileImage;
+
+    @Size(max = 500, message = "{msg.userProfile.bio.size}")
+    private String bio;
+
+    @Size(max = 10, message = "{msg.userProfile.locale.size}")
+    private String locale;
 
 }

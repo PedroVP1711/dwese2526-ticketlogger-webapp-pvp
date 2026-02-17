@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -19,56 +21,42 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String username;
-
-    @Column(nullable = false, unique = true)
+    @Column(name ="email", nullable = false, unique = true, length = 40)
     private String email;
 
-    // 🔹 Relación 1–1 con UserProfile (lado NO propietario)
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = false)
-    private UserProfile userProfile;
+    @Column(name = "password_hash", nullable = false, length = 500)
+    private String passwordHash;
 
-    // 🔹 Roles (muchos a muchos)
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
+    private UserProfile profile;
+
+    @Column(name = "active", nullable = false)
+    private Boolean active = Boolean.TRUE;
+
+    @Column(name = "account_non_locked", nullable = false)
+    private Boolean accountNonLocked = Boolean.TRUE;
+
+    @Column(name = "last_password_change")
+    private LocalDateTime lastPasswordChange;
+
+    @Column(name = "password_expires_at")
+    private LocalDateTime passwordExpiredAt;
+
+    @Column(name = "failed_login_attempts", nullable = false)
+    private Integer failedLoginAttempts = 0;
+
+    @Column(name = "email_verified", nullable = false)
+    private Boolean emailVerified = Boolean.FALSE;
+
+    @Column(name = "must_change_password", nullable = false)
+    private Boolean mustChangePassword = Boolean.FALSE;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
+            joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id")
     )
-    private Set<Role> roles;
+    private Set<Role> roles = new HashSet<>();
 
-    // Password
-    @Column(nullable = false)
-    private String passwordHash;
-
-    // Estado de la cuenta
-    private boolean active = true;
-    private boolean accountNonLocked = true;
-
-    // Seguridad
-    private int failedLoginAttempts = 0;
-    private boolean emailVerified = false;
-    private boolean mustChangePassword = false;
-
-    // Gestión de contraseñas
-    private Instant lastPasswordChange;
-    private Instant passwordExpiresAt;
-
-    // Constructor reducido
-    public User(Long id, String username, String email, String passwordHash) {
-        this.id = id;
-        this.username = username;
-        this.email = email;
-        this.passwordHash = passwordHash;
     }
-
-    // 🔹 Helper seguro para la imagen
-    public String getProfileImage() {
-        return userProfile != null ? userProfile.getProfileImage() : null;
-    }
-
-    public Boolean getEmailVerified() {
-        return emailVerified;
-    }
-}

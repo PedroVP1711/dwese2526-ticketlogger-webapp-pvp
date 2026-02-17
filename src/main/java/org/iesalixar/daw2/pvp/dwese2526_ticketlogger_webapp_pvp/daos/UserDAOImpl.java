@@ -129,67 +129,51 @@ public class UserDAOImpl implements UserDAO {
 
     // --- Métodos de Búsqueda por ID y Email ---
 
-    @Override
-    @Transactional(readOnly = true)
     public User findById(Long id) {
         if (id == null) return null;
         return entityManager.find(User.class, id);
     }
 
-    @Override
-    @Transactional(readOnly = true)
     public User getUserById(Long id) {
         return findById(id);
     }
 
-    @Override
-    @Transactional(readOnly = true)
     public User getUserByEmail(String email) {
         if (email == null) return null;
-        try {
-            TypedQuery<User> query = entityManager.createQuery(
-                    "SELECT u FROM User u WHERE u.email = :email", User.class);
-            query.setParameter("email", email);
-            return query.getSingleResult();
-        } catch (NoResultException e) {
-            return null;
-        } catch (Exception e) {
-            logger.error("Error al obtener usuario por email: {}", email, e);
-            return null;
-        }
+
+        String jpql = "SELECT u FROM User u WHERE u.email = :email";
+        return entityManager.createQuery(jpql, User.class)
+                .setParameter("email", email)
+                .getResultStream()
+                .findFirst()
+                .orElse(null);
     }
 
-    // --- Métodos de Existencia (Validación) ---
 
     @Override
-    @Transactional(readOnly = true)
     public boolean existsUserByEmail(String email) {
-        if (email == null) return false;
-        try {
-            TypedQuery<Long> query = entityManager.createQuery(
-                    "SELECT COUNT(u) FROM User u WHERE u.email = :email", Long.class);
-            query.setParameter("email", email);
-            return query.getSingleResult() > 0;
-        } catch (Exception e) {
-            logger.error("Error al verificar la existencia del usuario por email: {}", email, e);
-            return false;
+        logger.info("Checking if user with email: {} exits", email);
+        String hql = "SELECT COUNT(u) FROM User u WHERE UPPER(u.email) = :email";
+        Long count = entityManager.createQuery(hql, Long.class)
+                .setParameter("email", email.toUpperCase())
+                .getSingleResult();
+        boolean exists = count !=null && count > 0;
+        logger.info("User with email: {} exists: {}", email, exists);
+        return exists;
         }
-    }
+
 
 
     @Override
-    @Transactional(readOnly = true)
     public boolean existsUserByEmailAndNotId(String email, Long id) {
-        if (email == null) return false;
-        try {
-            TypedQuery<Long> query = entityManager.createQuery(
-                    "SELECT COUNT(u) FROM User u WHERE u.email = :email AND u.id <> :id", Long.class);
-            query.setParameter("email", email);
-            query.setParameter("id", id);
-            return query.getSingleResult() > 0;
-        } catch (Exception e) {
-            logger.error("Error al verificar la existencia del usuario por email y no ID: {}", email, e);
-            return false;
+        logger.info("Checking if user with email: {} exists excluding id: {}", email, id);
+        String hql = "SELECT COUNT(u) FROM User U WHERE UPPER(u.email) = :email AND u.id != :id";
+        Long count = entityManager.createQuery(hql, Long.class)
+                .setParameter("email", email.toUpperCase())
+                .setParameter("id", id)
+                .getSingleResult();
+        boolean exists = count != null && count > 0;
+        logger.info("User with email: {} exists excluding id {}: {}", email, id, exists);
+        return exists;
         }
     }
-}

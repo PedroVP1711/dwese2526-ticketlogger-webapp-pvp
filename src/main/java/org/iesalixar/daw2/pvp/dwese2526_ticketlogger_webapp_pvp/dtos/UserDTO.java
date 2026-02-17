@@ -12,5 +12,7 @@ import lombok.experimental.SuperBuilder; // <-- IMPORTANTE
 public class UserDTO {
     private Long id;
     private String email;
-    private String username;
+
+    public UserDTO(Long id, String email, String email1) {
+    }
 }

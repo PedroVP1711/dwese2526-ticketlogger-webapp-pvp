@@ -8,69 +8,68 @@
 
 <main class="form-page">
     <div class="form-card">
-        <h1 th:if="${user.id == null}" th:text="#{msg.user-form.add}">Añadir Usuario</h1>
-        <h1 th:if="${user.id != null}" th:text="#{msg.user-form.edit}">Editar Usuario</h1>
 
+        <!-- Título -->
+        <h1 th:text="#{msg.userProfile.title}"></h1>
+        <p class="text-muted" th:text="#{msg.userProfile.subtitle}"></p>
+
+        <!-- Mensaje global de éxito -->
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+
+        <!-- Mensaje global de error -->
         <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-        <form th:action="${user.id} == null ? @{/users/save} : @{/users/update}" th:object="${user}" method="post" class="mt-3">
-            <input type="hidden" th:field="*{id}" />
+        <!-- Formulario de perfil -->
+        <form th:action="@{/users/update}"
+              th:object="${userProfileForm}"
+              method="post"
+              class="mt-3">
+
+            <input type="hidden" th:field="*{userId}" />
 
             <div class="mb-3">
-                <label for="username" class="form-label" th:text="#{msg.user-form.username}">Nombre de Usuario</label>
-                <input type="text" id="username" th:field="*{username}" class="form-control" />
-                <div th:if="${#fields.hasErrors('username')}" class="text-danger" th:errors="*{username}"></div>
-            </div>
-
-            <div class="mb-3">
-                <label for="email" class="form-label" th:text="#{msg.user-form.email}">Correo Electrónico</label>
-                <input type="email" id="email" th:field="*{email}" class="form-control" />
-                <div th:if="${#fields.hasErrors('email')}" class="text-danger" th:errors="*{email}"></div>
+                <label for="email" class="form-label" th:text="#{msg.userProfile.field.email}"></label>
+                <input type="text" id="email" th:field="*{email}" class="form-control" readonly />
             </div>
 
             <div class="mb-3">
-                <label for="passwordHash" class="form-label" th:text="#{msg.user-form.password}">Contraseña</label>
-                <input type="password" id="passwordHash" name="passwordHash" th:field="*{passwordHash}" class="form-control" />
-                <div th:if="${#fields.hasErrors('passwordHash')}" class="text-danger" th:errors="*{passwordHash}"></div>
+                <label for="firstName" class="form-label" th:text="#{msg.userProfile.field.firstName}"></label>
+                <input type="text" id="firstName" th:field="*{firstName}" class="form-control" />
             </div>
 
-            <hr class="mt-4 mb-3"/>
-            <h5 th:text="#{msg.user-form.security_settings}">Configuración de Seguridad</h5>
-
-            <div class="row">
-                <div class="col-md-4 mb-3 form-check form-switch">
-                    <input type="checkbox" id="active" th:field="*{active}" class="form-check-input" role="switch"/>
-                    <label class="form-check-label" for="active" th:text="#{msg.user-form.active}">Activo</label>
-                </div>
-                <div class="col-md-4 mb-3 form-check form-switch">
-                    <input type="checkbox" id="accountNonLocked" th:field="*{accountNonLocked}" class="form-check-input" role="switch"/>
-                    <label class="form-check-label" for="accountNonLocked" th:text="#{msg.user-form.nonlocked}">No Bloqueado</label>
-                </div>
-                <div class="col-md-4 mb-3 form-check form-switch">
-                    <input type="checkbox" id="mustChangePassword" th:field="*{mustChangePassword}" class="form-check-input" role="switch"/>
-                    <label class="form-check-label" for="mustChangePassword" th:text="#{msg.user-form.mustchange}">Cambiar Contraseña</label>
-                </div>
+            <div class="mb-3">
+                <label for="lastName" class="form-label" th:text="#{msg.userProfile.field.lastName}"></label>
+                <input type="text" id="lastName" th:field="*{lastName}" class="form-control" />
             </div>
 
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="failedLoginAttempts" class="form-label" th:text="#{msg.user-form.failed_attempts}">Intentos Fallidos</label>
-                    <input type="number" id="failedLoginAttempts" th:field="*{failedLoginAttempts}" class="form-control" min="0" />
-                </div>
-                <div class="col-md-6 mb-3 form-check form-switch mt-4 pt-2">
-                    <input type="checkbox" id="emailVerified" th:field="*{emailVerified}" class="form-check-input" role="switch"/>
-                    <label class="form-check-label" for="emailVerified" th:text="#{msg.user-form.email_verified}">Email Verificado</label>
-                </div>
+            <div class="mb-3">
+                <label for="phoneNumber" class="form-label" th:text="#{msg.userProfile.field.phoneNumber}"></label>
+                <input type="text" id="phoneNumber" th:field="*{phoneNumber}" class="form-control" />
             </div>
 
-            <div class="mt-4">
-                <button th:if="${user.id == null}" type="submit" class="btn btn-primary" th:text="#{msg.user-form.create}">Crear</button>
-                <button th:if="${user.id != null}" type="submit" class="btn btn-primary" th:text="#{msg.user-form.update}">Actualizar</button>
-                <a th:href="@{/users}" class="btn btn-secondary" th:text="#{msg.user-form.returnback}">Volver</a>
+            <div class="mb-3">
+                <label for="profileImage" class="form-label" th:text="#{msg.userProfile.field.profileImage}"></label>
+                <input type="text" id="profileImage" th:field="*{profileImage}" class="form-control" />
             </div>
+
+            <div class="mb-3">
+                <label for="bio" class="form-label" th:text="#{msg.userProfile.field.bio}"></label>
+                <textarea id="bio" th:field="*{bio}" rows="3" class="form-control"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label for="locale" class="form-label" th:text="#{msg.userProfile.field.locale}"></label>
+                <input type="text" id="locale" th:field="*{locale}" class="form-control" placeholder="es_ES, en_GB, ..." />
+            </div>
+
+            <button type="submit" class="btn btn-primary" th:text="#{msg.userProfile.action.save}"></button>
+            <a th:href="@{/users}" class="btn btn-secondary ms-2" th:text="#{msg.userProfile.action.back}"></a>
         </form>
+
+
     </div>
 </main>
+
 
 <footer th:replace="fragments/footer :: footer"></footer>
 <div th:replace="fragments/scripts :: scripts"></div>
