@@ -137,4 +137,11 @@ public class UserProfileController {
     }
 
 
+    public FileStorageServices getFileStorageServices() {
+        return fileStorageServices;
+    }
+
+    public void setFileStorageServices(FileStorageServices fileStorageServices) {
+        this.fileStorageServices = fileStorageServices;
+    }
 }
