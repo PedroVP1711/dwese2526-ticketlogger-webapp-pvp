@@ -42,7 +42,7 @@ public class UserProfileController {
     private UserProfileDAO userProfileDAO;
 
     @Autowired
-    private FileStorageService fileStorageService;
+    private FileStorageServices fileStorageServices;
 
     /**
      * Muestra el formulario de perfil para el usuario indicado.
