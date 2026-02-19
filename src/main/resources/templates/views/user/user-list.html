@@ -1,103 +1,104 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="fragments/head :: head(#{user.list.title})"></head>
+<head th:replace="fragments/head :: head('Ticket Logger - Users List')"></head>
+
 <body class="d-flex flex-column h-100">
+
 <header th:replace="fragments/header :: header"></header>
 
-<main class="container py-4">
-    <h2 th:text="#{user.list.title}">Listado de Usuarios</h2>
+<main class="list-page">
+    <div class="list-card">
+        <h1 th:text="#{msg.users-list.title}"></h1>
 
-    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+        <!-- Botón para añadir usuario -->
+        <a th:href="@{/user/new}" class="btn btn-success mb-3" th:text="#{msg.users-list.create}"></a>
 
-    <a th:href="@{/users/new}" class="btn btn-success mb-3" th:text="#{user.add.new}">Añadir Nuevo Usuario</a>
+        <!-- Mensaje de error -->
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-    <table class="table table-bordered table-hover">
-        <thead>
-        <tr>
-            <th scope="col">
-                <a th:href="@{/users(page=${currentPage}, size=${pageSize}, sortField='id', sortDir=${sortField == 'id' ? reverseSortDir : 'asc'})}">
-                    <span th:text="#{user.id}">ID</span>
-                    <span th:if="${sortField == 'id'}" th:text="${sortDir == 'asc' ? ' ▲' : ' ▼'}"></span>
-                </a>
-            </th>
+        <!-- Tabla responsive -->
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped align-middle">
+                <thead>
+                <tr>
+                    <th th:text="#{msg.users-list.id}"></th>
+                    <th th:text="#{msg.users-list.email}"></th>
+                    <th th:text="#{msg.users-list.active}"></th>
+                    <th th:text="#{msg.users-list.accountNonLocked}"></th>
+                    <th th:text="#{msg.users-list.failedLoginAttempts}"></th>
+                    <th th:text="#{msg.users-list.emailVerified}"></th>
+                    <th th:text="#{msg.users-list.mustChangePassword}"></th>
+                    <th th:text="#{msg.users-list.lastPasswordChange}"></th>
+                    <th th:text="#{msg.users-list.passwordExpiredAt}"></th>
+                    <th th:text="#{msg.users-list.col.roles}"></th>
+                    <th th:text="#{msg.users-list.actions}"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="user : ${listUsers}">
+                    <td th:text="${user.id}"></td>
+                    <td th:text="${user.email}"></td>
+                    <td><span th:text="${user.active} ? #{msg.common.yes} : #{msg.common.no}"></span></td>
+                    <td><span th:text="${user.accountNonLocked} ? #{msg.common.yes} : #{msg.common.no}"></span></td>
+                    <td th:text="${user.failedLoginAttempts}"></td>
+                    <td><span th:text="${user.emailVerified} ? #{msg.common.yes} : #{msg.common.no}"></span></td>
+                    <td><span th:text="${user.mustChangePassword} ? #{msg.common.yes} : #{msg.common.no}"></span></td>
+                    <td th:text="${user.lastPasswordChange != null ? #temporals.format(user.lastPasswordChange, 'yyyy-MM-dd HH:mm') : 'N/A'}"></td>
+                    <td th:text="${
+                            user.passwordExpiredAt != null
+                                ? #temporals.format(user.passwordExpiredAt, 'yyyy-MM-dd HH:mm')
+                                : (user.lastPasswordChange != null
+                                    ? #temporals.format(user.lastPasswordChange.plusMonths(3), 'yyyy-MM-dd HH:mm')
+                                    : 'N/A')
+                        }"></td>
+                    <td th:text="${#lists.isEmpty(user.roles) ? '-' : #strings.listJoin(user.roles, ', ')}"></td>
+                    <td>
+                        <a th:href="@{/user/detail(id=${user.id})}" class="btn btn-outline-secondary btn-sm me-1" th:text="#{msg.users-list.viewDetail}"></a>
+                        <a th:href="@{/user/edit(id=${user.id})}" class="btn btn-primary btn-sm me-1" th:text="#{msg.users-list.edit}"></a>
+                        <form th:action="@{/user/delete}" method="post" class="d-inline">
+                            <input type="hidden" name="id" th:value="${user.id}" />
+                            <button type="submit" class="btn btn-danger btn-sm"
+                                    th:onclick="return confirm('#{msg.users-list.confirmDelete}')"
+                                    th:text="#{msg.users-list.delete}"></button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
 
-            <th scope="col">
-                <a th:href="@{/users(page=${currentPage}, size=${pageSize}, sortField='email', sortDir=${sortField == 'email' ? reverseSortDir : 'asc'})}">
-                    <span th:text="#{user.email}">Email</span>
-                    <span th:if="${sortField == 'email'}" th:text="${sortDir == 'asc' ? ' ▲' : ' ▼'}"></span>
-                </a>
-            </th>
-
-            <th scope="col" th:text="#{user.active}">Activo</th>
-            <th scope="col" th:text="#{user.locked}">Bloqueado</th>
-            <th scope="col" th:text="#{user.email_verified}">Email Verificado</th>
-
-            <th scope="col" th:text="#{user.actions}">Acciones</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="user : ${users}">
-            <td th:text="${user.id}">1</td>
-            <td th:text="${user.email}">user@example.com</td>
-
-            <td>
-                <span th:if="${user.active}" class="text-success">✔</span>
-                <span th:unless="${user.active}" class="text-danger">❌</span>
-            </td>
-            <td>
-                <span th:if="${user.accountNonLocked}" class="text-success">✔</span>
-                <span th:unless="${user.accountNonLocked}" class="text-danger">❌</span>
-            </td>
-            <td>
-                <span th:if="${user.emailVerified}" class="text-success">✔</span>
-                <span th:unless="${user.emailVerified}" class="text-danger">❌</span>
-            </td>
-
-            <td class="d-flex gap-1">
-                <a th:href="@{/users/detail(id=${user.id})}" class="btn btn-info btn-sm" th:text="#{user.detail}">Detalle</a>
-                <a th:href="@{/users/edit(id=${user.id})}" class="btn btn-warning btn-sm" th:text="#{user.edit}">Editar</a>
-
-                <form th:action="@{/users/delete}" method="get" style="display:inline;" th:attr="onsubmit=|return confirm(this.getAttribute('data-confirm'))|" th:data-confirm="#{user.confirmDelete}">
-                    <input type="hidden" name="id" th:value="${user.id}" />
-                    <button type="submit" class="btn btn-danger btn-sm" th:text="#{user.delete}">Eliminar</button>
-                </form>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-
-    <div th:if="${totalPages > 0}" class="row mt-3">
-        <div class="col-sm-12">
-            <nav aria-label="Page navigation" th:if="${totalPages > 1}">
-                <ul class="pagination justify-content-center">
-                    <li th:class="${currentPage == 0 ? 'page-item disabled' : 'page-item'}">
-                        <a class="page-link"
-                           th:href="@{/users(page=${currentPage - 1}, size=${pageSize}, sortField=${sortField}, sortDir=${sortDir})}"
-                           th:text="#{pagination.previous}">Anterior</a>
+        <!-- Paginación -->
+        <div class="d-flex justify-content-between align-items-center mt-3" th:if="${totalPages > 0}">
+            <div>
+                <span th:text="${msg.pagination.info(${currentPage} + 1, ${totalPages}, ${totalElements})}"></span>
+            </div>
+            <nav th:aria-label="#{msg.pagination.aria.label}">
+                <ul class="pagination mb-0">
+                    <li class="page-item" th:classappend="${currentPage == 0} ? ' disabled'">
+                        <a class="page-link" th:href="@{/user(page=${currentPage - 1}, size=${pageSize})}" th:aria-label="#{msg.pagination.prev}">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
                     </li>
-
-                    <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
-                        th:class="${currentPage == i ? 'page-item active' : 'page-item'}">
-                        <a class="page-link"
-                           th:href="@{/users(page=${i}, size=${pageSize}, sortField=${sortField}, sortDir=${sortDir})}"
-                           th:text="${i + 1}"></a>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i} == ${currentPage ? ' active' : ''}">
+                        <a class="page-link" th:text="${i + 1}" th:href="@{/user(page=${i}, size=${pageSize})}"></a>
                     </li>
-
-                    <li th:class="${currentPage == totalPages - 1 || totalPages == 0 ? 'page-item disabled' : 'page-item'}">
-                        <a class="page-link"
-                           th:href="@{/users(page=${currentPage + 1}, size=${pageSize}, sortField=${sortField}, sortDir=${sortDir})}"
-                           th:text="#{pagination.next}">Siguiente</a>
+                    <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? ' disabled'">
+                        <a class="page-link" th:href="@{/user(page=${currentPage + 1}, size=${pageSize})}" th:aria-label="#{msg.pagination.next}">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
                     </li>
                 </ul>
             </nav>
-            <div th:unless="${totalElements == 0}" class="text-center mt-2">
-                <p th:text="#{msg.pagination.info(${currentPage + 1}, ${totalPages}, ${totalElements})}">Página X de Y (Z registros)</p>
-            </div>
         </div>
+
+        <!-- Botón volver al home -->
+        <a th:href="@{/}" class="btn btn-secondary mt-3" th:text="#{msg.users-list.returnback}"></a>
     </div>
 </main>
 
 <footer th:replace="fragments/footer :: footer"></footer>
 <div th:replace="fragments/scripts :: scripts"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+
 </body>
 </html>

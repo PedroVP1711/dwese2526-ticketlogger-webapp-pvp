@@ -136,12 +136,10 @@ public class UserProfileController {
         return "redirect:/profile/edit";
     }
 
-
-    public FileStorageServices getFileStorageServices() {
-        return fileStorageServices;
+    @GetMapping("/change-password")
+    public String showChangePasswordForm(Model model) {
+        // Aquí puedes pasar datos al formulario si es necesario
+        return "views/user-profile/change-password-form"; // Nombre de la vista Thymeleaf
     }
 
-    public void setFileStorageServices(FileStorageServices fileStorageServices) {
-        this.fileStorageServices = fileStorageServices;
-    }
 }

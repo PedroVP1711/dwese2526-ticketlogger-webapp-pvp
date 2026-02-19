@@ -17,6 +17,8 @@ public interface UserDAO {
 
     void deleteUser(Long id);
 
+    boolean existsByEmail(String email);
+
     User getUserById(Long id);
 
     boolean existsUserByEmail(String email);
@@ -26,6 +28,5 @@ public interface UserDAO {
     User getUserByEmail(String email);
 
     User findById(Long userId);
-
 
 }

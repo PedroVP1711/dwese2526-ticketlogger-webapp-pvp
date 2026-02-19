@@ -9,26 +9,30 @@ import lombok.NoArgsConstructor;
 import java.util.HashSet;
 import java.util.Set;
 
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserCreateDTO {
+public class UserUpdateDTO {
 
-    private Long id;
+    private Long id; // Necesario para saber qué usuario actualizar
 
     @NotEmpty(message = "{msg.users.email.notEmpty}")
     private String email;
 
-    @NotEmpty(message = "{msg.users.password.notEmpty}")
+    // La contraseña puede ser opcional al actualizar
     private String password;
 
-    private boolean active = true;
-    private boolean accountNonLocked = true;
+    private boolean active;
+    private boolean accountNonLocked;
 
     @NotNull(message = "{msg.users.emailVerified.notNull}")
-    private Boolean emailVerified = false;
+    private Boolean emailVerified;
 
-    private boolean mustChangePassword = false;
+    private boolean mustChangePassword;
+
+    // Opcional: incluir si quieres permitir actualización de intentos fallidos
+    private int failedLoginAttempts;
 
     @NotEmpty(message = "{msg.user.roles.notempty}")
     private Set<Long> roleIds = new HashSet<>();

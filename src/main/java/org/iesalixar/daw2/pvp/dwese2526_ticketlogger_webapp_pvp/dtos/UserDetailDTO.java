@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Data
 @Builder
@@ -17,6 +18,7 @@ public class UserDetailDTO {
     private String email;
     private String PasswordHash;
     private boolean Active;
+    private Boolean accountNonLocked;
     private LocalDateTime lastPasswordChange;
     private LocalDateTime passwordExpiredAt;
     private Integer failedLoginAttempts = 0;
@@ -31,5 +33,5 @@ public class UserDetailDTO {
     private String bio;
     private String locale;
 
-
+    private Set<String> roles;
 }

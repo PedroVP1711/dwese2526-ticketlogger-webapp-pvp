@@ -1,11 +1,17 @@
 package org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.controllers;
 
-import jakarta.transaction.Transactional;
+
+import jakarta.validation.Valid;
+import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.daos.RoleDAO;
 import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.daos.UserDAO;
-import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.daos.UserProfileDAO;
+import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.dtos.UserCreateDTO;
+import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.dtos.UserDTO;
+import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.dtos.UserDetailDTO;
+import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.dtos.UserUpdateDTO;
 import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.entities.User;
-import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.entities.UserProfile;
-import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.dtos.UserProfileFormDTO;
+import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.mappers.UserMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Controller;
@@ -14,168 +20,207 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import jakarta.validation.Valid;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 
 @Controller
-@RequestMapping("/users")
+@RequestMapping("/user")
 public class UserController {
+
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
     @Autowired
     private UserDAO userDAO;
 
     @Autowired
-    private UserProfileDAO userProfileDAO;
-
-    @Autowired
     private MessageSource messageSource;
 
-    /* ============================================
-       LISTADO DE USUARIOS
-     ============================================ */
+    @Autowired
+    private RoleDAO roleDAO;
+
+    // --------------------------
+    // Listado de usuarios
+    // --------------------------
     @GetMapping("")
-    public String listUsers(Model model, Locale locale) {
-        List<User> users = userDAO.listAllUsers();
-        model.addAttribute("users", users);
+    public String listUsers(Model model) {
+        logger.info("Solicitando la lista de usuarios...");
+        try {
+            List<User> users = userDAO.listAllUsers();
+            List<UserDTO> usersDTO = UserMapper.toDTOList(users);
+            model.addAttribute("listUsers", usersDTO);
+        } catch (Exception e) {
+            logger.error("Error al listar usuarios: {}", e.getMessage());
+            model.addAttribute("errorMessage", messageSource.getMessage(
+                    "msg.user-controller.list.error", null, Locale.getDefault()));
+        }
         return "views/user/user-list";
     }
 
-    /* ============================================
-       DETALLE DE USUARIO
-     ============================================ */
-    @GetMapping("/detail")
-    public String showUserDetail(@RequestParam("id") Long id, Model model, RedirectAttributes redirectAttributes, Locale locale) {
-        User user = userDAO.getUserById(id);
-        if (user == null) {
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    messageSource.getMessage("msg.user-controller.detail.notFound", null, locale));
-            return "redirect:/users";
-        }
-        model.addAttribute("user", user);
-        return "views/user/user-detail";
-    }
-
-    /* ============================================
-       FORMULARIO NUEVO USUARIO
-     ============================================ */
+    // --------------------------
+    // Formulario de nuevo usuario
+    // --------------------------
     @GetMapping("/new")
     public String showNewForm(Model model) {
-        UserProfileFormDTO form = new UserProfileFormDTO();
-        model.addAttribute("userProfileForm", form);
+        logger.info("Mostrando formulario para crear usuario...");
+        model.addAttribute("user", new UserCreateDTO());
+        model.addAttribute("allRoles", roleDAO.listAllRoles());
         return "views/user/user-form";
     }
 
-    /* ============================================
-       FORMULARIO EDICIÓN USUARIO
-     ============================================ */
+    // --------------------------
+    // Insertar nuevo usuario
+    // --------------------------
+    @PostMapping("/insert")
+    public String insertUser(@Valid @ModelAttribute("user") UserCreateDTO dto,
+                             BindingResult result,
+                             RedirectAttributes redirectAttributes,
+                             Locale locale,
+                             Model model) {
+        logger.info("Insertando nuevo usuario: {}", dto.getEmail());
+
+        if (result.hasErrors()) {
+            model.addAttribute("allRoles",roleDAO.listAllRoles());
+            return "views/user/user-form";
+        }
+
+        try {
+            if (userDAO.existsByEmail(dto.getEmail())) {
+                String errorMessage = messageSource.getMessage(
+                        "msg.user-controller.insert.emailExist", null, locale);
+                redirectAttributes.addFlashAttribute("errorMessage", errorMessage);
+                return "redirect:/user/new";
+            }
+
+            var roles = new HashSet<>(roleDAO.findAllByIds(dto.getRoleIds()));
+
+            User user = UserMapper.toEntity(dto);
+            userDAO.insertUser(user);
+            logger.info("Usuario {} insertado con éxito.", dto.getEmail());
+        } catch (Exception e) {
+            logger.error("Error al insertar usuario {}: {}", dto.getEmail(), e.getMessage());
+            String errorMessage = messageSource.getMessage(
+                    "msg.user-controller.insert.error", null, locale);
+            redirectAttributes.addFlashAttribute("errorMessage", errorMessage);
+        }
+
+        return "redirect:/user";
+    }
+
+    // --------------------------
+    // Formulario de edición
+    // --------------------------
     @GetMapping("/edit")
-    public String showEditForm(@RequestParam("id") Long id, Model model, RedirectAttributes redirectAttributes, Locale locale) {
-        User user = userDAO.getUserById(id);
-        if (user == null) {
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    messageSource.getMessage("msg.user-controller.edit.notFound", null, locale));
-            return "redirect:/users";
+    public String showEditForm(@RequestParam("id") Long id, Model model) {
+        logger.info("Mostrando formulario de edición para ID {}", id);
+        try {
+            User user = userDAO.getUserById(id);
+            if (user == null) {
+                model.addAttribute("errorMessage", "Usuario no encontrado");
+                return "redirect:/user";
+            }
+            UserUpdateDTO dto = UserMapper.toUpdateDTO(user);
+            model.addAttribute("user", dto);
+            model.addAttribute("allRoles", roleDAO.listAllRoles());
+        } catch (Exception e) {
+            logger.error("Error al obtener usuario ID {}: {}", id, e.getMessage());
+            model.addAttribute("errorMessage", "Error al obtener usuario");
+            return "redirect:/user";
         }
-
-        UserProfileFormDTO form = new UserProfileFormDTO();
-        form.setUserId(user.getId());
-        form.setEmail(user.getEmail());
-
-        UserProfile profile = userProfileDAO.getUserProfileByUserId(user.getId());
-        if (profile != null) {
-            form.setFirstName(profile.getFirstName());
-            form.setLastName(profile.getLastName());
-            form.setPhoneNumber(profile.getPhoneNumber());
-            form.setProfileImage(profile.getProfileImage());
-            form.setBio(profile.getBio());
-            form.setLocale(profile.getLocale());
-        }
-
-        model.addAttribute("userProfileForm", form);
         return "views/user/user-form";
     }
 
-    /* ============================================
-       GUARDAR O ACTUALIZAR USUARIO
-     ============================================ */
+    // --------------------------
+// Actualizar usuario
+// --------------------------
     @PostMapping("/update")
-    @Transactional
-    public String saveOrUpdate(@Valid @ModelAttribute("userProfileForm") UserProfileFormDTO form,
-                               BindingResult result,
-                               Model model,
-                               RedirectAttributes redirectAttributes,
-                               Locale locale) {
+    public String updateUser(@Valid @ModelAttribute("user") UserUpdateDTO dto,
+                             BindingResult result,
+                             RedirectAttributes redirectAttributes,
+                             Locale locale) {
+        logger.info("Actualizando usuario ID {}", dto.getId());
 
         if (result.hasErrors()) {
             return "views/user/user-form";
         }
 
-        User user;
-        boolean isNew = form.getUserId() == null;
-
-        if (isNew) {
-            user = createNewUser(form);
-        } else {
-            user = userDAO.getUserById(form.getUserId());
-            if (user == null) {
-                redirectAttributes.addFlashAttribute("errorMessage",
-                        messageSource.getMessage("msg.user-controller.update.notFound", null, locale));
-                return "redirect:/users";
+        try {
+            if (userDAO.existsUserByEmailAndNotId(dto.getEmail(), dto.getId())) {
+                String errorMessage = messageSource.getMessage(
+                        "msg.user-controller.update.emailExist", null, locale);
+                redirectAttributes.addFlashAttribute("errorMessage", errorMessage);
+                return "redirect:/user/edit?id=" + dto.getId();
             }
+
+            User existingUser = userDAO.getUserById(dto.getId());
+            if (existingUser == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Usuario no encontrado");
+                return "redirect:/user";
+            }
+
+            // >>> Obtener los roles desde roleIds que llegan en el DTO
+            var roles = new HashSet<>(roleDAO.findAllByIds(dto.getRoleIds()));
+
+            // Mapear DTO -> entidad User incluyendo roles
+            User user = UserMapper.toEntity(dto);
+
+            // Actualizar el usuario con los roles
+            userDAO.updateUser(user);
+            logger.info("Usuario ID {} actualizado con éxito.", dto.getId());
+        } catch (Exception e) {
+            logger.error("Error al actualizar usuario ID {}: {}", dto.getId(), e.getMessage());
+            String errorMessage = messageSource.getMessage(
+                    "msg.user-controller.update.error", null, locale);
+            redirectAttributes.addFlashAttribute("errorMessage", errorMessage);
         }
 
-        updateUserProfile(user, form);
-
-        return "redirect:/users/detail?id=" + user.getId();
+        return "redirect:/user";
     }
 
-    /* ============================================
-       ELIMINAR USUARIO
-     ============================================ */
-    @GetMapping("/delete")
-    @Transactional
-    public String deleteUser(@RequestParam("id") Long id, RedirectAttributes redirectAttributes, Locale locale) {
-        User user = userDAO.getUserById(id);
-        if (user == null) {
+
+    // --------------------------
+    // Eliminar usuario
+    // --------------------------
+    @PostMapping("/delete")
+    public String deleteUser(@RequestParam("id") Long id,
+                             RedirectAttributes redirectAttributes) {
+        logger.info("Eliminando usuario ID {}", id);
+        try {
+            userDAO.deleteUser(id);
+            logger.info("Usuario ID {} eliminado.", id);
+        } catch (Exception e) {
+            logger.error("Error al eliminar usuario ID {}: {}", id, e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage",
-                    messageSource.getMessage("msg.user-controller.delete.notFound", null, locale));
-            return "redirect:/users";
+                    messageSource.getMessage("msg.user-controller.delete.error", null, Locale.getDefault()));
+        }
+        return "redirect:/user";
+    }
+
+    // --------------------------
+    // Vista de detalle
+    // --------------------------
+    @GetMapping("/detail")
+    public String showDetail(@RequestParam("id") Long id, Model model, RedirectAttributes redirectAttributes) {
+        logger.info("Mostrando detalle del usuario con ID {}", id);
+
+        try {
+            User user = userDAO.getUserById(id);
+
+            if (user == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Usuario no encontrado");
+                return "redirect:/user";
+            }
+
+            UserDetailDTO dto = UserMapper.toDetailDTO(user);
+            model.addAttribute("user", dto);
+
+        } catch (Exception e) {
+            logger.error("Error al obtener detalle del usuario ID {}: {}", id, e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error cargando detalle del usuario");
+            return "redirect:/user";
         }
 
-        userDAO.deleteUser(id);
-        return "redirect:/users";
+        return "views/user/user-detail";
     }
 
-    /* ============================================
-       MÉTODOS AUXILIARES
-     ============================================ */
-
-    private User createNewUser(UserProfileFormDTO form) {
-        User user = new User();
-        user.setEmail(form.getEmail());
-        user.setActive(true);
-        user.setRoles(new HashSet<>());
-        user.setPasswordHash("default123");  // Temporario hasta implementes el sistema de contraseñas.
-        userDAO.insertUser(user);
-        return user;
-    }
-
-    private void updateUserProfile(User user, UserProfileFormDTO form) {
-        UserProfile profile = userProfileDAO.getUserProfileByUserId(user.getId());
-        if (profile == null) {
-            profile = new UserProfile();
-            profile.setUser(user);
-        }
-
-        profile.setFirstName(form.getFirstName());
-        profile.setLastName(form.getLastName());
-        profile.setPhoneNumber(form.getPhoneNumber());
-        profile.setProfileImage(form.getProfileImage());
-        profile.setBio(form.getBio());
-        profile.setLocale(form.getLocale());
-
-        userProfileDAO.saveOrUpdateUserProfile(profile);
-    }
 }

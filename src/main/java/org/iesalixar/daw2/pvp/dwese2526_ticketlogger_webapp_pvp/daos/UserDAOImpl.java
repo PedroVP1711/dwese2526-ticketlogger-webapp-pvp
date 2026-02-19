@@ -1,7 +1,6 @@
 package org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.daos;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.entities.User;
@@ -134,6 +133,19 @@ public class UserDAOImpl implements UserDAO {
         return entityManager.find(User.class, id);
     }
 
+
+    @Override
+    public boolean existsByEmail(String email) {
+        logger.info("Comprobando si existe usuario con email: {}", email);
+        String hql = "SELECT COUNT(u) FROM User u WHERE UPPER(u.email) = :email";
+        Long count = entityManager.createQuery(hql, Long.class)
+                .setParameter("email", email.toUpperCase())
+                .getSingleResult();
+        boolean exists = count != null && count > 0;
+        logger.info("Usuario con email '{}' existe: {}", email, exists);
+        return exists;
+    }
+
     public User getUserById(Long id) {
         return findById(id);
     }
@@ -167,7 +179,7 @@ public class UserDAOImpl implements UserDAO {
     @Override
     public boolean existsUserByEmailAndNotId(String email, Long id) {
         logger.info("Checking if user with email: {} exists excluding id: {}", email, id);
-        String hql = "SELECT COUNT(u) FROM User U WHERE UPPER(u.email) = :email AND u.id != :id";
+        String hql = "SELECT COUNT(u) FROM User U WHERE UPPER(u.email) = :email AND u.id = :id";
         Long count = entityManager.createQuery(hql, Long.class)
                 .setParameter("email", email.toUpperCase())
                 .setParameter("id", id)
