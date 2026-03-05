@@ -1,19 +1,21 @@
 package org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.controllers;
 
-
 import jakarta.validation.Valid;
-import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.daos.RoleDAO;
-import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.daos.UserDAO;
 import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.dtos.UserCreateDTO;
 import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.dtos.UserDTO;
 import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.dtos.UserDetailDTO;
 import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.dtos.UserUpdateDTO;
 import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.entities.User;
+import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.repositories.roleRepository;
+import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.repositories.userRepository;
 import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.mappers.UserMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -23,6 +25,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/user")
@@ -31,24 +34,24 @@ public class UserController {
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
     @Autowired
-    private UserDAO userDAO;
+    private userRepository userDAO;
+
+    @Autowired
+    private roleRepository roleDAO;
 
     @Autowired
     private MessageSource messageSource;
-
-    @Autowired
-    private RoleDAO roleDAO;
 
     // --------------------------
     // Listado de usuarios
     // --------------------------
     @GetMapping("")
-    public String listUsers(Model model) {
+    public String listUsers(Model model, @PageableDefault(size = 10, sort = "id") Pageable pageable) {
         logger.info("Solicitando la lista de usuarios...");
         try {
-            List<User> users = userDAO.listAllUsers();
-            List<UserDTO> usersDTO = UserMapper.toDTOList(users);
-            model.addAttribute("listUsers", usersDTO);
+            Page<User> usersPage = userDAO.findAll(pageable); // esto devuelve Page<User>
+            Page<UserDTO> usersDTOPage = usersPage.map(UserMapper::toDTO); // convierte a DTO
+            model.addAttribute("page", usersDTOPage); // ojo: la vista espera "page"
         } catch (Exception e) {
             logger.error("Error al listar usuarios: {}", e.getMessage());
             model.addAttribute("errorMessage", messageSource.getMessage(
@@ -64,7 +67,7 @@ public class UserController {
     public String showNewForm(Model model) {
         logger.info("Mostrando formulario para crear usuario...");
         model.addAttribute("user", new UserCreateDTO());
-        model.addAttribute("allRoles", roleDAO.listAllRoles());
+        model.addAttribute("allRoles", roleDAO.findAll());
         return "views/user/user-form";
     }
 
@@ -77,10 +80,11 @@ public class UserController {
                              RedirectAttributes redirectAttributes,
                              Locale locale,
                              Model model) {
+
         logger.info("Insertando nuevo usuario: {}", dto.getEmail());
 
         if (result.hasErrors()) {
-            model.addAttribute("allRoles",roleDAO.listAllRoles());
+            model.addAttribute("allRoles", roleDAO.findAll());
             return "views/user/user-form";
         }
 
@@ -92,16 +96,16 @@ public class UserController {
                 return "redirect:/user/new";
             }
 
-            var roles = new HashSet<>(roleDAO.findAllByIds(dto.getRoleIds()));
-
             User user = UserMapper.toEntity(dto);
-            userDAO.insertUser(user);
+            user.setRoles(new HashSet<>(roleDAO.findAllByIdIn(dto.getRoleIds())));
+
+            userDAO.save(user); // ✅ save() reemplaza insertUser()
+
             logger.info("Usuario {} insertado con éxito.", dto.getEmail());
         } catch (Exception e) {
             logger.error("Error al insertar usuario {}: {}", dto.getEmail(), e.getMessage());
-            String errorMessage = messageSource.getMessage(
-                    "msg.user-controller.insert.error", null, locale);
-            redirectAttributes.addFlashAttribute("errorMessage", errorMessage);
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    messageSource.getMessage("msg.user-controller.insert.error", null, locale));
         }
 
         return "redirect:/user";
@@ -113,70 +117,67 @@ public class UserController {
     @GetMapping("/edit")
     public String showEditForm(@RequestParam("id") Long id, Model model) {
         logger.info("Mostrando formulario de edición para ID {}", id);
-        try {
-            User user = userDAO.getUserById(id);
-            if (user == null) {
-                model.addAttribute("errorMessage", "Usuario no encontrado");
-                return "redirect:/user";
-            }
-            UserUpdateDTO dto = UserMapper.toUpdateDTO(user);
-            model.addAttribute("user", dto);
-            model.addAttribute("allRoles", roleDAO.listAllRoles());
-        } catch (Exception e) {
-            logger.error("Error al obtener usuario ID {}: {}", id, e.getMessage());
-            model.addAttribute("errorMessage", "Error al obtener usuario");
+
+        Optional<User> userOpt = userDAO.findById(id);
+
+        if (userOpt.isEmpty()) {
+            model.addAttribute("errorMessage", "Usuario no encontrado");
             return "redirect:/user";
         }
+
+        UserUpdateDTO dto = UserMapper.toUpdateDTO(userOpt.get());
+        model.addAttribute("user", dto);
+        model.addAttribute("allRoles", roleDAO.findAll());
+
         return "views/user/user-form";
     }
 
     // --------------------------
-// Actualizar usuario
-// --------------------------
+    // Actualizar usuario
+    // --------------------------
     @PostMapping("/update")
     public String updateUser(@Valid @ModelAttribute("user") UserUpdateDTO dto,
                              BindingResult result,
                              RedirectAttributes redirectAttributes,
-                             Locale locale) {
+                             Locale locale,
+                             Model model) {
+
         logger.info("Actualizando usuario ID {}", dto.getId());
 
         if (result.hasErrors()) {
+            model.addAttribute("allRoles", roleDAO.findAll());
             return "views/user/user-form";
         }
 
         try {
-            if (userDAO.existsUserByEmailAndNotId(dto.getEmail(), dto.getId())) {
-                String errorMessage = messageSource.getMessage(
-                        "msg.user-controller.update.emailExist", null, locale);
-                redirectAttributes.addFlashAttribute("errorMessage", errorMessage);
+            if (userDAO.existsByEmailAndIdNot(dto.getEmail(), dto.getId())) {
+                redirectAttributes.addFlashAttribute("errorMessage",
+                        messageSource.getMessage("msg.user-controller.update.emailExist", null, locale));
                 return "redirect:/user/edit?id=" + dto.getId();
             }
 
-            User existingUser = userDAO.getUserById(dto.getId());
-            if (existingUser == null) {
+            Optional<User> existingUserOpt = userDAO.findById(dto.getId());
+
+            if (existingUserOpt.isEmpty()) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Usuario no encontrado");
                 return "redirect:/user";
             }
 
-            // >>> Obtener los roles desde roleIds que llegan en el DTO
-            var roles = new HashSet<>(roleDAO.findAllByIds(dto.getRoleIds()));
-
-            // Mapear DTO -> entidad User incluyendo roles
             User user = UserMapper.toEntity(dto);
+            user.setRoles(new HashSet<>(roleDAO.findAllByIdIn(dto.getRoleIds())));
 
-            // Actualizar el usuario con los roles
-            userDAO.updateUser(user);
+            userDAO.save(user); // ✅ save() reemplaza updateUser()
+
             logger.info("Usuario ID {} actualizado con éxito.", dto.getId());
+
         } catch (Exception e) {
             logger.error("Error al actualizar usuario ID {}: {}", dto.getId(), e.getMessage());
-            String errorMessage = messageSource.getMessage(
-                    "msg.user-controller.update.error", null, locale);
-            redirectAttributes.addFlashAttribute("errorMessage", errorMessage);
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    messageSource.getMessage("msg.user-controller.update.error", null, locale));
         }
 
         return "redirect:/user";
     }
-
 
     // --------------------------
     // Eliminar usuario
@@ -184,15 +185,18 @@ public class UserController {
     @PostMapping("/delete")
     public String deleteUser(@RequestParam("id") Long id,
                              RedirectAttributes redirectAttributes) {
+
         logger.info("Eliminando usuario ID {}", id);
+
         try {
-            userDAO.deleteUser(id);
+            userDAO.deleteById(id); // ✅ deleteById() reemplaza deleteUser()
             logger.info("Usuario ID {} eliminado.", id);
         } catch (Exception e) {
             logger.error("Error al eliminar usuario ID {}: {}", id, e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage",
                     messageSource.getMessage("msg.user-controller.delete.error", null, Locale.getDefault()));
         }
+
         return "redirect:/user";
     }
 
@@ -200,27 +204,22 @@ public class UserController {
     // Vista de detalle
     // --------------------------
     @GetMapping("/detail")
-    public String showDetail(@RequestParam("id") Long id, Model model, RedirectAttributes redirectAttributes) {
+    public String showDetail(@RequestParam("id") Long id,
+                             Model model,
+                             RedirectAttributes redirectAttributes) {
+
         logger.info("Mostrando detalle del usuario con ID {}", id);
 
-        try {
-            User user = userDAO.getUserById(id);
+        Optional<User> userOpt = userDAO.findById(id);
 
-            if (user == null) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Usuario no encontrado");
-                return "redirect:/user";
-            }
-
-            UserDetailDTO dto = UserMapper.toDetailDTO(user);
-            model.addAttribute("user", dto);
-
-        } catch (Exception e) {
-            logger.error("Error al obtener detalle del usuario ID {}: {}", id, e.getMessage());
-            redirectAttributes.addFlashAttribute("errorMessage", "Error cargando detalle del usuario");
+        if (userOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Usuario no encontrado");
             return "redirect:/user";
         }
 
+        UserDetailDTO dto = UserMapper.toDetailDTO(userOpt.get());
+        model.addAttribute("user", dto);
+
         return "views/user/user-detail";
     }
-
 }

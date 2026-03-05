@@ -10,22 +10,43 @@ import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.entities.UserPro
 import java.time.LocalDateTime;
 import java.util.Set;
 
+/**
+ * DTO genérico de lectura para User.
+ * Se puede usar tanto para listados como para vistas de detalle simples.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@SuperBuilder // <-- Soluciona el error 'cannot find symbol UserDTOBuilder'
 public class UserDTO {
-    private Long id;
-    private String email;
-    private String passwordHash;
-    private UserProfile profile;
-    private Boolean active;
-    private Boolean accountNonLocked;
-    private LocalDateTime lastPasswordChange;
-    private LocalDateTime passwordExpiredAt;
-    private Integer failedLoginAttempts ;
-    private Boolean emailVerified;
-    private Boolean mustChangePassword;
 
+
+    private Long id;
+
+
+    private String email;
+
+
+    private boolean active;
+
+
+    private boolean accountNonLocked;
+
+
+    private LocalDateTime lastPasswordChange;
+
+
+    private LocalDateTime passwordExpiresAt;
+
+
+    private Integer failedLoginAttempts;
+
+
+    private boolean emailVerified;
+
+
+    private boolean mustChangePassword;
+
+
+    // Roles asociados al usuario (nombres técnicos: ROLE_ADMIN, ROLE_USER, etc.)
     private Set<String> roles;
 }

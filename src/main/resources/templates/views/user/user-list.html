@@ -7,22 +7,39 @@
 <header th:replace="fragments/header :: header"></header>
 
 <main class="list-page">
-    <div class="list-card">
+    <div class="list-card container py-4">
         <h1 th:text="#{msg.users-list.title}"></h1>
 
-        <!-- Botón para añadir usuario -->
         <a th:href="@{/user/new}" class="btn btn-success mb-3" th:text="#{msg.users-list.create}"></a>
 
-        <!-- Mensaje de error -->
         <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-        <!-- Tabla responsive -->
         <div class="table-responsive">
             <table class="table table-bordered table-striped align-middle">
                 <thead>
                 <tr>
-                    <th th:text="#{msg.users-list.id}"></th>
-                    <th th:text="#{msg.users-list.email}"></th>
+                    <!-- Columna ID -->
+                    <th scope="col" th:with="order=${page?.sort?.getOrderFor('id')},
+                                             dir=${order != null ? order.direction.name().toLowerCase() : 'asc'},
+                                             nextDir=${dir == 'asc' ? 'desc' : 'asc'}">
+                        <a class="text-decoration-none text-dark"
+                           th:href="@{/user(page=${page.number}, size=${page.size}, sort='id,' + ${nextDir})}">
+                            <span th:text="#{msg.users-list.id}"></span>
+                            <span th:if="${order != null}" th:text="${dir == 'asc' ? ' ▲' : ' ▼'}"></span>
+                        </a>
+                    </th>
+
+                    <!-- Columna Email -->
+                    <th scope="col" th:with="order=${page?.sort?.getOrderFor('email')},
+                                             dir=${order != null ? order.direction.name().toLowerCase() : 'asc'},
+                                             nextDir=${dir == 'asc' ? 'desc' : 'asc'}">
+                        <a class="text-decoration-none text-dark"
+                           th:href="@{/user(page=${page.number}, size=${page.size}, sort='email,' + ${nextDir})}">
+                            <span th:text="#{msg.users-list.email}"></span>
+                            <span th:if="${order != null}" th:text="${dir == 'asc' ? ' ▲' : ' ▼'}"></span>
+                        </a>
+                    </th>
+
                     <th th:text="#{msg.users-list.active}"></th>
                     <th th:text="#{msg.users-list.accountNonLocked}"></th>
                     <th th:text="#{msg.users-list.failedLoginAttempts}"></th>
@@ -34,8 +51,9 @@
                     <th th:text="#{msg.users-list.actions}"></th>
                 </tr>
                 </thead>
+
                 <tbody>
-                <tr th:each="user : ${listUsers}">
+                <tr th:each="user : ${page.content}">
                     <td th:text="${user.id}"></td>
                     <td th:text="${user.email}"></td>
                     <td><span th:text="${user.active} ? #{msg.common.yes} : #{msg.common.no}"></span></td>
@@ -45,22 +63,26 @@
                     <td><span th:text="${user.mustChangePassword} ? #{msg.common.yes} : #{msg.common.no}"></span></td>
                     <td th:text="${user.lastPasswordChange != null ? #temporals.format(user.lastPasswordChange, 'yyyy-MM-dd HH:mm') : 'N/A'}"></td>
                     <td th:text="${
-                            user.passwordExpiredAt != null
-                                ? #temporals.format(user.passwordExpiredAt, 'yyyy-MM-dd HH:mm')
-                                : (user.lastPasswordChange != null
-                                    ? #temporals.format(user.lastPasswordChange.plusMonths(3), 'yyyy-MM-dd HH:mm')
-                                    : 'N/A')
-                        }"></td>
+                        user.passwordExpiredAt != null
+                            ? #temporals.format(user.passwordExpiredAt, 'yyyy-MM-dd HH:mm')
+                            : (user.lastPasswordChange != null
+                                ? #temporals.format(user.lastPasswordChange.plusMonths(3), 'yyyy-MM-dd HH:mm')
+                                : 'N/A')
+                    }"></td>
                     <td th:text="${#lists.isEmpty(user.roles) ? '-' : #strings.listJoin(user.roles, ', ')}"></td>
                     <td>
-                        <a th:href="@{/user/detail(id=${user.id})}" class="btn btn-outline-secondary btn-sm me-1" th:text="#{msg.users-list.viewDetail}"></a>
-                        <a th:href="@{/user/edit(id=${user.id})}" class="btn btn-primary btn-sm me-1" th:text="#{msg.users-list.edit}"></a>
-                        <form th:action="@{/user/delete}" method="post" class="d-inline">
-                            <input type="hidden" name="id" th:value="${user.id}" />
-                            <button type="submit" class="btn btn-danger btn-sm"
-                                    th:onclick="return confirm('#{msg.users-list.confirmDelete}')"
-                                    th:text="#{msg.users-list.delete}"></button>
-                        </form>
+                        <div class="d-flex gap-1">
+                            <a th:href="@{/user/detail(id=${user.id})}" class="btn btn-outline-secondary btn-sm"
+                               th:text="#{msg.users-list.viewDetail}"></a>
+                            <a th:href="@{/user/edit(id=${user.id})}" class="btn btn-primary btn-sm"
+                               th:text="#{msg.users-list.edit}"></a>
+                            <form th:action="@{/user/delete}" method="post" class="d-inline">
+                                <input type="hidden" name="id" th:value="${user.id}" />
+                                <button type="submit" class="btn btn-danger btn-sm"
+                                        th:onclick="return confirm([[#{msg.users-list.confirmDelete}]])"
+                                        th:text="#{msg.users-list.delete}"></button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 </tbody>
@@ -68,22 +90,26 @@
         </div>
 
         <!-- Paginación -->
-        <div class="d-flex justify-content-between align-items-center mt-3" th:if="${totalPages > 0}">
+        <div class="d-flex justify-content-between align-items-center mt-3" th:if="${page.totalPages > 0}">
             <div>
-                <span th:text="${msg.pagination.info(${currentPage} + 1, ${totalPages}, ${totalElements})}"></span>
+                <span th:text="#{msg.pagination.info(${page.number} + 1, ${page.totalPages}, ${page.totalElements})}"></span>
             </div>
             <nav th:aria-label="#{msg.pagination.aria.label}">
                 <ul class="pagination mb-0">
-                    <li class="page-item" th:classappend="${currentPage == 0} ? ' disabled'">
-                        <a class="page-link" th:href="@{/user(page=${currentPage - 1}, size=${pageSize})}" th:aria-label="#{msg.pagination.prev}">
+                    <li class="page-item" th:classappend="${page.first} ? ' disabled'">
+                        <a class="page-link" th:href="@{/user(page=${page.number - 1}, size=${page.size}, sort=${sortParam})}">
                             <span aria-hidden="true">&laquo;</span>
                         </a>
                     </li>
-                    <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i} == ${currentPage ? ' active' : ''}">
-                        <a class="page-link" th:text="${i + 1}" th:href="@{/user(page=${i}, size=${pageSize})}"></a>
+
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}"
+                        th:classappend="${i == page.number} ? ' active'">
+                        <a class="page-link" th:text="${i + 1}"
+                           th:href="@{/user(page=${i}, size=${page.size}, sort=${sortParam})}"></a>
                     </li>
-                    <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? ' disabled'">
-                        <a class="page-link" th:href="@{/user(page=${currentPage + 1}, size=${pageSize})}" th:aria-label="#{msg.pagination.next}">
+
+                    <li class="page-item" th:classappend="${page.last} ? ' disabled'">
+                        <a class="page-link" th:href="@{/user(page=${page.number + 1}, size=${page.size}, sort=${sortParam})}">
                             <span aria-hidden="true">&raquo;</span>
                         </a>
                     </li>
@@ -91,14 +117,12 @@
             </nav>
         </div>
 
-        <!-- Botón volver al home -->
         <a th:href="@{/}" class="btn btn-secondary mt-3" th:text="#{msg.users-list.returnback}"></a>
     </div>
 </main>
 
 <footer th:replace="fragments/footer :: footer"></footer>
 <div th:replace="fragments/scripts :: scripts"></div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
 
 </body>
 </html>

@@ -1,45 +1,54 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="fragments/head :: head(#{msg.province-detail.title})"></head>
+<head th:replace="fragments/head :: head('User Detail')"></head>
 
 <body class="d-flex flex-column h-100">
 
 <header th:replace="fragments/header :: header"></header>
 
-<main class="detail-page">
-    <div class="detail-card">
-        <h1 th:text="#{msg.province-detail.title}">Detalles de la Provincia</h1>
+<main class="form-page">
+    <div class="form-card">
 
-        <div class="mb-3">
-            <label class="form-label font-weight-bold" th:text="#{msg.province-detail.id}"></label>
-            <p th:text="${province.id}"></p>
-        </div>
+        <h1>
+            <span th:text="#{msg.users-detail.title}"></span>:
+            <span th:text="${user.email}"></span>
+        </h1>
 
-        <div class="mb-3">
-            <label class="form-label font-weight-bold" th:text="#{msg.province-detail.code}"></label>
-            <p th:text="${province.code}"></p>
-        </div>
+        <dl class="row mt-3">
+            <dt class="col-sm-3">ID</dt>
+            <dd class="col-sm-9" th:text="${user.id}"></dd>
 
-        <div class="mb-3">
-            <label class="form-label font-weight-bold" th:text="#{msg.province-detail.name}"></label>
-            <p th:text="${province.name}"></p>
-        </div>
+            <dt class="col-sm-3">Email</dt>
+            <dd class="col-sm-9" th:text="${user.email}"></dd>
 
-        <div class="mb-3">
-            <label class="form-label font-weight-bold" th:text="#{msg.province-detail.region}"></label>
-            <p th:text="${province.regionName}"></p>
-        </div>
+            <dt class="col-sm-3">Activo</dt>
+            <dd class="col-sm-9"
+                th:text="${user.active} ? #{msg.common.yes} : #{msg.common.no}"></dd>
 
-        <div class="d-flex gap-2">
-            <a th:href="@{/provinces/edit(id=${province.id})}" class="btn btn-warning" th:text="#{msg.province-detail.edit}"></a>
+            <dt class="col-sm-3">Bloqueado</dt>
+            <dd class="col-sm-9"
+                th:text="${user.accountNonLocked} ? #{msg.common.yes} : #{msg.common.no}"></dd>
 
-            <a th:href="@{/provinces}" class="btn btn-secondary" th:text="#{msg.province-detail.returnback}"></a>
-        </div>
+            <dt class="col-sm-3">Intentos fallidos</dt>
+            <dd class="col-sm-9" th:text="${user.failedLoginAttempts}"></dd>
+
+            <dt class="col-sm-3">Roles</dt>
+            <dd class="col-sm-9">
+                <ul th:if="${!#lists.isEmpty(user.roles)}">
+                    <li th:each="role : ${user.roles}" th:text="${role}"></li>
+                </ul>
+                <span th:if="${#lists.isEmpty(user.roles)}" class="text-muted">
+                    Sin roles
+                </span>
+            </dd>
+        </dl>
+
+        <a th:href="@{/user}" class="btn btn-secondary">Volver</a>
+        <a th:href="@{/user/edit(id=${user.id})}" class="btn btn-primary">Editar</a>
+
     </div>
 </main>
 
 <footer th:replace="fragments/footer :: footer"></footer>
-<div th:replace="fragments/scripts :: scripts"></div>
-
 </body>
 </html>

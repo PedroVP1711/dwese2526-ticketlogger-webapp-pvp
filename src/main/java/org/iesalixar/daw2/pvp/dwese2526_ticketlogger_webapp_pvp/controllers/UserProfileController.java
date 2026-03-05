@@ -1,13 +1,15 @@
 package org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.controllers;
 
-import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.services.FileStorageServices;
 import jakarta.validation.Valid;
-import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.daos.UserDAO;
-import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.daos.UserProfileDAO;
 import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.dtos.UserProfileFormDTO;
 import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.entities.User;
 import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.entities.UserProfile;
+import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.exceptions.ResourceNotFoundException;
 import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.mappers.UserProfileMapper;
+import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.repositories.userProfileRepository;
+import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.repositories.userRepository;
+import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.services.FileStorageServices;
+import org.iesalixar.daw2.pvp.dwese2526_ticketlogger_webapp_pvp.services.userProfileService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,127 +21,112 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.security.Principal;
 import java.util.Locale;
-
-/**
- * Controlador para la funcionalidad de perfil de usuario ("Mi perfil").
- *
- * No es un CRUD clásico, sino un único formulario que permite crear o
- * actualizar el perfil del usuario.
- */
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/profile")
 public class UserProfileController {
+
     private static final Logger logger = LoggerFactory.getLogger(UserProfileController.class);
+
+    @Autowired
+    private userRepository userDAO;
+
+    @Autowired
+    private userProfileRepository userProfileDAO;
+
+    @Autowired
+    private FileStorageServices fileStorageServices;
 
     @Autowired
     private MessageSource messageSource;
 
     @Autowired
-    private UserDAO userDAO;
-
-    @Autowired
-    private UserProfileDAO userProfileDAO;
-
-    @Autowired
-    private FileStorageServices fileStorageServices;
-
-    /**
-     * Muestra el formulario de perfil para el usuario indicado.
-     * Si el perfil no existe, se mostrarán los campos vacíos (alta).
-     * Si existe, se precargarán los datos (edición).
-     *
-     * @param model Modelo para pasar datos a la vista.
-     * @param locale Locale actual para mensajes traducidos.
-     * @return Plantilla Thymeleaf del formulario del perfil.
-     */
+    private userProfileService userProfileService;
+    // --------------------------
+    // Mostrar formulario
+    // --------------------------
     @GetMapping("/edit")
-    public String showProfileForm(Model model, Locale locale) {
-        final String fixedEmail = "admin@app.local";
-        logger.info("Mostrando formulario de perfil para el usuario fijo {}", fixedEmail);
+    public String showProfileForm(Model model, Locale locale, Principal principal) {
+        String email = principal.getName();
+        logger.info("Mostrando formulario de perfil para {}", email);
 
-        User user = userDAO.getUserByEmail(fixedEmail);
-        if (user == null) {
-            logger.warn("No se encontró el usuario con email {}" , fixedEmail);
-            String erroMessage = messageSource.getMessage("msg.user-controller.edit.notfound", null, locale);
-            model.addAttribute("errorMessage", erroMessage);
+        Optional<User> userOpt = userDAO.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            String errorMessage = messageSource.getMessage(
+                    "msg.user-controller.edit.notfound", null, locale
+            );
+            model.addAttribute("errorMessage", errorMessage);
             return "views/user-profile/user-profile-form";
         }
-        UserProfile profile = userProfileDAO.getUserProfileByUserId(user.getId());
-        UserProfileFormDTO formDto = UserProfileMapper.toFormDto(user, profile);
+
+        User user = userOpt.get();
+        Optional<UserProfile> profileOpt = userProfileDAO.findByUserId(user.getId());
+
+        UserProfileFormDTO formDto = UserProfileMapper.toFormDto(user, profileOpt.orElse(null));
         model.addAttribute("userProfileForm", formDto);
 
         return "views/user-profile/user-profile-form";
     }
 
-    /**
-     * Procesa el envío del formulario de perfil de usuario.
-     * Si el perfil no existe, lo crea. Si existe, lo actualiza.
-     *
-     * @param profileDto              DTO con los datos del formulario.
-     * @param result                  Resultado de la validación.
-     * @param redirectAttributes      Atributos para mensajes flash.
-     * @param locale                  Locale actual para mensajes traducidos
-     * @return Redirección al propio formulario de perfil (para mostrar mensaje)
-     */
 
+    // --------------------------
+    // Actualizar perfil
+    // --------------------------
     @PostMapping("/update")
-    public String updateProfile(@Valid @ModelAttribute("userProfileForm") UserProfileFormDTO profileDto,
-                                BindingResult result,
-                                @RequestParam(value = "profileImageFile", required = false) MultipartFile profileImageFile,
-                                RedirectAttributes redirectAttributes,
-                                Locale locale) {
+    public String updateProfile(
+            @Valid @ModelAttribute("userProfileForm") UserProfileFormDTO profileDto,
+            BindingResult result,
+            @RequestParam(value = "profileImageFile", required = false) MultipartFile profileImageFile,
+            RedirectAttributes redirectAttributes,
+            Locale locale,
+            Principal principal) {
 
+        String email = principal.getName();
+        logger.info("Actualizando perfil para email={}", email);
 
-        logger.info("Actualizando perfil para el usuario de perfil para iserID={}", profileDto.getUserId());
-
+        // 1) Si hay errores de validación, volver al formulario
         if (result.hasErrors()) {
-            logger.warn("Errores de validación para el usuario con ID {}", profileDto.getUserId());
+            logger.warn("Errores de validación en el formulario para email={}", email);
             return "views/user-profile/user-profile-form";
         }
+
         try {
-            Long userId = profileDto.getUserId();
-            User user = userDAO.getUserById(userId);
-            if(user ==null){
-                logger.warn("No se encontró el usuario con ID {}",userId);
-                String errorMessage = messageSource.getMessage(
-                        "msg.user-controller.edit.notfound",
-                        null,
-                        locale
-                );
-                redirectAttributes.addFlashAttribute("errorMessage",errorMessage);
-                return"redirect:/profile/edit";
-            }
 
-            UserProfile profile = userProfileDAO.getUserProfileByUserId(userId);
-            boolean isNew = (profile == null);
-            if(isNew) {
-                profile =UserProfileMapper.toNewEntity(profileDto, user);
-            } else{
-                UserProfileMapper.copyToExistingEntity(profileDto, profile);
-            }
-            userProfileDAO.saveOrUpdateUserProfile(profile);
+            // 2) Delegar lógica al service (NO usar profileDto.getUserId())
+            userProfileService.updateProfile(email, profileDto, profileImageFile);
 
-            String successMessage = messageSource.getMessage("msg.userProfile.success", null, locale);
-            redirectAttributes.addFlashAttribute("successMessage",successMessage);
-        } catch (Exception e) {
-            logger.error("Error al actualizar el perfil del usuario on ID {}: {}",
-                    profileDto.getUserId(), e.getMessage(), e);
-            String errorMessage = messageSource.getMessage(
-                    "msg.userProfile.error",
+            // 3) Mensaje de éxito
+            String successMessage = messageSource.getMessage(
+                    "msg.userProfile.success",
                     null,
                     locale
             );
+
+            redirectAttributes.addFlashAttribute("successMessage", successMessage);
+
+        } catch (ResourceNotFoundException ex) {
+
+            logger.error("Usuario no encontrado para email={}", email);
+
+            String errorMessage = messageSource.getMessage(
+                    "msg.user-controller.edit.notfound",
+                    null,
+                    locale
+            );
+
             redirectAttributes.addFlashAttribute("errorMessage", errorMessage);
+            return "redirect:/profile/edit";
         }
+
         return "redirect:/profile/edit";
     }
 
     @GetMapping("/change-password")
     public String showChangePasswordForm(Model model) {
-        // Aquí puedes pasar datos al formulario si es necesario
-        return "views/user-profile/change-password-form"; // Nombre de la vista Thymeleaf
+        return "views/user-profile/change-password-form";
     }
 
 }

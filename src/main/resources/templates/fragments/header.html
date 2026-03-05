@@ -1,4 +1,4 @@
-<header th:fragment="header" class="border-bottom bg-light" xmlns:th="http://www.thymeleaf.org">
+<header th:fragment="header" class="border-bottom bg-light" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
 
@@ -33,11 +33,16 @@
                         <a class="nav-link" th:href="@{/provinces}">Provincias</a>
                     </li>
 
+                    <div class="d-none d-lg-flex align-items-center me-3"
+                         sec:authorize="isAuthenticated()">
+                        <span class="small text-secondary fw-medium me-1">Bienvenido,</span>
+                        <span class="small fw-semibold text-primary text-truncate" style="max-width:220px"
+                              sec:authentication="name"></span>
+                    </div>
+
                     <form method="get"
                           class="d-lg-flex align-items-center me-3"
                           th:action="@{/}">
-
-
                         <label for="langSelect" class="visually-hidden">Idioma</label>
                         <select id="langSelect" name="lang" class="form-select form-select-sm" onchange="this.form.submit()">
                             <option value="es" th:selected="${#locale.language == 'es'}">Español</option>
@@ -45,6 +50,20 @@
                         </select>
                     </form>
 
+                    <!-- Botón de Login (solo si NO autenticado) -->
+                    <div sec:authorize="!isAuthenticated()">
+                        <a class="btn btn-outline-primary btn-sm"
+                           th:href="@{/login}">
+                            Login
+                        </a>
+                    </div>
+                    <li>
+                        <form th:action="@{/logout}" method="post" class="m-0">
+                            <button type="submit" class="dropdown-item text-danger">
+                                Cerrar sesión
+                            </button>
+                        </form>
+                    </li>
                 </ul>
 
                 <!-- Avatar y menú usuario -->

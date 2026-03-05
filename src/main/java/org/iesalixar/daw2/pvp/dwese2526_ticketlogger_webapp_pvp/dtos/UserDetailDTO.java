@@ -8,30 +8,69 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.Set;
 
+/**
+ * DTO de detalle de User.
+ * Pensado para vistas de detalle donde, en un futuro,
+ * se puedan incluir colecciones relacionadas (roles, tickets, etc.).
+ */
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserDetailDTO {
 
+
     private Long id;
+
+
     private String email;
-    private String PasswordHash;
-    private boolean Active;
-    private Boolean accountNonLocked;
+
+
+    private boolean active;
+
+
+    private boolean accountNonLocked;
+
+
     private LocalDateTime lastPasswordChange;
-    private LocalDateTime passwordExpiredAt;
-    private Integer failedLoginAttempts = 0;
-    private Boolean emailVerified = Boolean.FALSE;
-    private Boolean mustChangePassword = Boolean.FALSE;
+
+
+    private LocalDateTime passwordExpiresAt;
+
+
+    private Integer failedLoginAttempts;
+
+
+    private boolean emailVerified;
+
+
+    private boolean mustChangePassword;
+
+
+    // ────────────────────────────────────────────
+    // Campos del perfil del usuario (UserProfile)
+    // ────────────────────────────────────────────
 
 
     private String firstName;
+
+
     private String lastName;
+
+
     private String phoneNumber;
+
+
     private String profileImage;
+
+
     private String bio;
+
+
     private String locale;
 
+
+    // ────────────────────────────────────────────
+    // Roles del usuario (nombres de rol)
+    // ────────────────────────────────────────────
     private Set<String> roles;
 }
